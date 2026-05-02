@@ -48,3 +48,18 @@ fastlane/test_output
 
 # Claude / agents
 .claude/
+
+# Firebase / GCP secrets — never commit
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+ServiceAccount*.json
+firebase-debug.log
+.firebaserc
+
+# Apple Sign-In key
+*.p8
+*.p12
+
+# Local env
+.env
+.env.*
