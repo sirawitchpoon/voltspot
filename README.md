@@ -15,7 +15,7 @@ Built on Clean Architecture, SwiftUI, and OCPP 1.6-J.
 
 > **Status — early scaffold.** UI, persistence, and the OCPP layer are wired up with mock data. The backend Central System and real station data are intentionally out of scope at this stage.
 
-> **Naming.** `Voltspot` is a working title and may change. The display name is centralised in [`AppConfig.appName`](ProjectCharge/App/AppConfig.swift) and resolves through every UI surface — rebranding is a single-line edit.
+> **Naming.** `Voltspot` is a working title and may change. The display name is centralised in [`AppConfig.appName`](Voltspot/App/AppConfig.swift) and resolves through every UI surface — rebranding is a single-line edit.
 
 ---
 
@@ -87,9 +87,9 @@ A more detailed UX brief — including localisation keys, mock data, and design 
 ## Project layout
 
 ```
-ProjectCharge/
-├── ProjectCharge.xcodeproj/      # Xcode 16+ uses a synchronized root group — files auto-discover
-├── ProjectCharge/
+Voltspot/
+├── Voltspot.xcodeproj/      # Xcode 16+ uses a synchronized root group — files auto-discover
+├── Voltspot/
 │   ├── App/                      # Entry point, AppConfig, AppSession, RootView
 │   ├── Resources/                # Localizable.xcstrings (th + en)
 │   ├── Domain/
@@ -109,7 +109,7 @@ ProjectCharge/
 │   └── Core/
 │       ├── Localization/         # CurrencyFormatter (THB)
 │       └── Map/                  # ThailandRegion (default map region)
-└── ProjectChargeTests/
+└── VoltspotTests/
     ├── OCPPCodableTests.swift
     └── RolePreferenceStoreTests.swift
 ```
@@ -181,7 +181,7 @@ No third-party dependencies. No package manager.
 ```bash
 git clone https://github.com/sirawitchpoon/voltspot.git
 cd voltspot
-open ProjectCharge.xcodeproj
+open Voltspot.xcodeproj
 ```
 
 Pick an iPhone simulator (iOS 17+) and press ⌘R.
@@ -190,19 +190,19 @@ Pick an iPhone simulator (iOS 17+) and press ⌘R.
 
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
-  -project ProjectCharge.xcodeproj \
-  -scheme ProjectCharge \
+  -project Voltspot.xcodeproj \
+  -scheme Voltspot \
   -destination 'platform=iOS Simulator,name=iPhone 17' \
   -configuration Debug build CODE_SIGNING_ALLOWED=NO
 ```
 
-> The synchronized root group means **new files appear in the target automatically** — just drop a `.swift` file under `ProjectCharge/ProjectCharge/...` and Xcode will pick it up. Don't hand-edit `project.pbxproj`.
+> The synchronized root group means **new files appear in the target automatically** — just drop a `.swift` file under `Voltspot/Voltspot/...` and Xcode will pick it up. Don't hand-edit `project.pbxproj`.
 
 ---
 
 ## Rebranding in one edit
 
-Open [`ProjectCharge/App/AppConfig.swift`](ProjectCharge/App/AppConfig.swift) and change:
+Open [`Voltspot/App/AppConfig.swift`](Voltspot/App/AppConfig.swift) and change:
 
 ```swift
 enum AppConfig {
@@ -214,15 +214,15 @@ enum AppConfig {
 Verify there is exactly one match in the source tree:
 
 ```bash
-grep -rn '"Voltspot"' ProjectCharge --include='*.swift'
+grep -rn '"Voltspot"' Voltspot --include='*.swift'
 ```
 
 ---
 
 ## Localisation
 
-- All user-visible strings live in [`Resources/Localizable.xcstrings`](ProjectCharge/Resources/Localizable.xcstrings).
-- Currency formatting goes through [`Core/Localization/CurrencyFormatter.swift`](ProjectCharge/Core/Localization/CurrencyFormatter.swift) — reads `AppConfig.currencyCode` (`THB`) and `AppConfig.currencyLocaleIdentifier` (`th_TH`).
+- All user-visible strings live in [`Resources/Localizable.xcstrings`](Voltspot/Resources/Localizable.xcstrings).
+- Currency formatting goes through [`Core/Localization/CurrencyFormatter.swift`](Voltspot/Core/Localization/CurrencyFormatter.swift) — reads `AppConfig.currencyCode` (`THB`) and `AppConfig.currencyLocaleIdentifier` (`th_TH`).
 - To add a language: append the locale to `AppConfig.supportedLanguages`, add it to `knownRegions` in the project, and translate the entries in the `.xcstrings` catalog.
 
 ---

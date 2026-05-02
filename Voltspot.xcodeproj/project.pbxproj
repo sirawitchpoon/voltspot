@@ -7,11 +7,15 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		193149802FA57DA00090E13D /* ProjectCharge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProjectCharge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		193149802FA57DA00090E13D /* Voltspot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Voltspot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		193149822FA57DA00090E13D /* ProjectCharge */ = {isa = PBXFileSystemSynchronizedRootGroup; path = ProjectCharge; sourceTree = "<group>"; };
+		193149822FA57DA00090E13D /* Voltspot */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Voltspot;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -28,7 +32,7 @@
 		193149772FA57DA00090E13D = {
 			isa = PBXGroup;
 			children = (
-				193149822FA57DA00090E13D /* ProjectCharge */,
+				193149822FA57DA00090E13D /* Voltspot */,
 				193149812FA57DA00090E13D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -36,7 +40,7 @@
 		193149812FA57DA00090E13D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				193149802FA57DA00090E13D /* ProjectCharge.app */,
+				193149802FA57DA00090E13D /* Voltspot.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -44,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1931497F2FA57DA00090E13D /* ProjectCharge */ = {
+		1931497F2FA57DA00090E13D /* Voltspot */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1931498B2FA57DA10090E13D /* Build configuration list for PBXNativeTarget "ProjectCharge" */;
+			buildConfigurationList = 1931498B2FA57DA10090E13D /* Build configuration list for PBXNativeTarget "Voltspot" */;
 			buildPhases = (
 				1931497C2FA57DA00090E13D /* Sources */,
 				1931497D2FA57DA00090E13D /* Frameworks */,
@@ -57,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				193149822FA57DA00090E13D /* ProjectCharge */,
+				193149822FA57DA00090E13D /* Voltspot */,
 			);
-			name = ProjectCharge;
+			name = Voltspot;
 			packageProductDependencies = (
 			);
-			productName = ProjectCharge;
-			productReference = 193149802FA57DA00090E13D /* ProjectCharge.app */;
+			productName = Voltspot;
+			productReference = 193149802FA57DA00090E13D /* Voltspot.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -81,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1931497B2FA57DA00090E13D /* Build configuration list for PBXProject "ProjectCharge" */;
+			buildConfigurationList = 1931497B2FA57DA00090E13D /* Build configuration list for PBXProject "Voltspot" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -96,7 +100,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1931497F2FA57DA00090E13D /* ProjectCharge */,
+				1931497F2FA57DA00090E13D /* Voltspot */,
 			);
 		};
 /* End PBXProject section */
@@ -269,7 +273,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.projectcharge.ProjectCharge;
+				PRODUCT_BUNDLE_IDENTIFIER = com.voltspot.Voltspot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -303,7 +307,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.projectcharge.ProjectCharge;
+				PRODUCT_BUNDLE_IDENTIFIER = com.voltspot.Voltspot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -318,7 +322,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1931497B2FA57DA00090E13D /* Build configuration list for PBXProject "ProjectCharge" */ = {
+		1931497B2FA57DA00090E13D /* Build configuration list for PBXProject "Voltspot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				193149892FA57DA10090E13D /* Debug */,
@@ -327,7 +331,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1931498B2FA57DA10090E13D /* Build configuration list for PBXNativeTarget "ProjectCharge" */ = {
+		1931498B2FA57DA10090E13D /* Build configuration list for PBXNativeTarget "Voltspot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1931498C2FA57DA10090E13D /* Debug */,

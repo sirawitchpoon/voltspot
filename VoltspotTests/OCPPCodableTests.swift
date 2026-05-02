@@ -1,5 +1,5 @@
 import XCTest
-@testable import ProjectCharge
+@testable import Voltspot
 
 final class OCPPCodableTests: XCTestCase {
 

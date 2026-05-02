@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ProjectChargeApp: App {
+struct VoltspotApp: App {
     @State private var session: AppSession
 
     init() {
