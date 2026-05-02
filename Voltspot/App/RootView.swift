@@ -21,6 +21,7 @@ struct RootView: View {
                 }
             }
         }
+        .tint(.appAccent)
         .task {
             guard !didBootstrap else { return }
             await session.bootstrap()

@@ -6,17 +6,31 @@ struct AuthView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                BrandHeader(subtitle: "auth.subtitle")
-                    .padding(.top, 40)
+            ZStack {
+                Color.appBg.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ZStack {
+                            Color.appAccentTint
+                            WeavePattern()
+                            VStack {
+                                Spacer()
+                                BrandHeader(subtitle: "auth.subtitle")
+                                Spacer()
+                            }
+                            .padding(.bottom, AppSpacing.xl)
+                        }
+                        .frame(height: 240)
 
-                if let viewModel {
-                    AuthForm(viewModel: viewModel)
+                        if let viewModel {
+                            AuthForm(viewModel: viewModel)
+                                .padding(AppSpacing.xl)
+                        }
+                    }
                 }
-
-                Spacer()
+                .scrollDismissesKeyboard(.interactively)
             }
-            .padding()
+            .navigationBarHidden(true)
         }
         .onAppear {
             if viewModel == nil {
@@ -34,56 +48,96 @@ private struct AuthForm: View {
     @Bindable var viewModel: AuthViewModel
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppSpacing.lg) {
             Picker("auth.mode", selection: $viewModel.mode) {
                 Text("auth.signIn").tag(AuthViewModel.Mode.signIn)
                 Text("auth.signUp").tag(AuthViewModel.Mode.signUp)
             }
             .pickerStyle(.segmented)
 
-            if viewModel.mode == .signUp {
-                TextField("auth.displayName", text: $viewModel.displayName)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.words)
+            VStack(spacing: AppSpacing.md) {
+                if viewModel.mode == .signUp {
+                    AppTextField(
+                        title: "auth.displayName",
+                        text: $viewModel.displayName,
+                        autocapitalization: .words
+                    )
+                }
+
+                AppTextField(
+                    title: "auth.email",
+                    text: $viewModel.email,
+                    keyboard: .emailAddress,
+                    autocapitalization: .never,
+                    autocorrect: false
+                )
+
+                AppSecureField(title: "auth.password", text: $viewModel.password)
             }
-
-            TextField("auth.email", text: $viewModel.email)
-                .textFieldStyle(.roundedBorder)
-                .textInputAutocapitalization(.never)
-                .keyboardType(.emailAddress)
-                .autocorrectionDisabled()
-
-            SecureField("auth.password", text: $viewModel.password)
-                .textFieldStyle(.roundedBorder)
 
             if viewModel.mode == .signUp {
                 HStack {
                     Text("auth.password.requirement \(AppConfig.minimumPasswordLength)")
-                        .font(.caption)
-                        .foregroundStyle(viewModel.passwordMeetsMinimum ? Color.secondary : Color.red)
+                        .font(.appText(12))
+                        .foregroundStyle(passwordHintColor)
                     Spacer()
                 }
             }
 
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
+                    .font(.appText(13, weight: .medium))
+                    .foregroundStyle(Color.appDanger)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Button {
+            PrimaryButton(
+                title: viewModel.mode == .signIn ? "auth.signIn" : "auth.signUp",
+                isLoading: viewModel.isWorking,
+                isDisabled: !viewModel.canSubmit
+            ) {
                 Task { await viewModel.submit() }
-            } label: {
-                if viewModel.isWorking {
-                    ProgressView()
-                } else {
-                    Text(viewModel.mode == .signIn ? "auth.signIn" : "auth.signUp")
-                        .frame(maxWidth: .infinity)
-                }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(viewModel.isWorking || !viewModel.canSubmit)
+            .padding(.top, AppSpacing.sm)
         }
-        .padding()
+    }
+
+    private var passwordHintColor: Color {
+        if viewModel.password.isEmpty { return .appFg3 }
+        return viewModel.passwordMeetsMinimum ? .appAccent : .appDanger
+    }
+}
+
+private struct AppTextField: View {
+    let title: LocalizedStringKey
+    @Binding var text: String
+    var keyboard: UIKeyboardType = .default
+    var autocapitalization: TextInputAutocapitalization = .sentences
+    var autocorrect: Bool = true
+
+    var body: some View {
+        TextField(title, text: $text)
+            .keyboardType(keyboard)
+            .textInputAutocapitalization(autocapitalization)
+            .autocorrectionDisabled(!autocorrect)
+            .font(.appText(15))
+            .foregroundStyle(Color.appFg)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.vertical, 14)
+            .background(Color.appSurface2, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+    }
+}
+
+private struct AppSecureField: View {
+    let title: LocalizedStringKey
+    @Binding var text: String
+
+    var body: some View {
+        SecureField(title, text: $text)
+            .font(.appText(15))
+            .foregroundStyle(Color.appFg)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.vertical, 14)
+            .background(Color.appSurface2, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
     }
 }
