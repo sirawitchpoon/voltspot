@@ -1,13 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "stations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "geohash", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "sessions",
       "queryScope": "COLLECTION",
       "fields": [
