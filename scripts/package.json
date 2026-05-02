@@ -1,0 +1,13 @@
+{
+  "name": "voltspot-scripts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Operational scripts for the Voltspot iOS app — seeding, exports, migrations.",
+  "scripts": {
+    "seed:stations": "node seed-stations.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

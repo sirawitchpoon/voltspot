@@ -53,8 +53,12 @@ fastlane/test_output
 GoogleService-Info.plist
 **/GoogleService-Info.plist
 ServiceAccount*.json
+*service-account*.json
 firebase-debug.log
 .firebaserc
+
+# Node.js (for scripts/)
+node_modules/
 
 # Apple Sign-In key
 *.p8
