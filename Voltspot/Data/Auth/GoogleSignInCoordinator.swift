@@ -20,9 +20,15 @@ final class GoogleSignInCoordinator {
     /// Configures GoogleSignIn with the OAuth client ID embedded in
     /// `GoogleService-Info.plist`. Call once at app launch (after
     /// `FirebaseApp.configure()`).
+    ///
+    /// Silently skips configuration when `clientID` is absent — happens
+    /// when `GoogleService-Info.plist` was downloaded before Google
+    /// Sign-In was enabled in the Firebase Console. The app keeps
+    /// running on Email/Password sign-in; tapping the Google button will
+    /// fail gracefully via `presentSignIn`.
     static func configure() {
         guard let clientID = FirebaseApp.app()?.options.clientID else {
-            assertionFailure("Missing Firebase clientID — is GoogleService-Info.plist present?")
+            print("⚠️ GoogleSignIn: missing clientID — re-download GoogleService-Info.plist after enabling Google sign-in provider in Firebase Console")
             return
         }
         GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
