@@ -8,7 +8,11 @@ import Foundation
 /// backend setup plan for collection layout. Geo queries use a single
 /// geohash prefix range and refine results client-side with great-circle
 /// distance — see `Geohash.boundingRange` for the trade-offs.
-struct RealStationRepository: StationRepository {
+///
+/// `@unchecked Sendable` because Firebase's `Firestore` is thread-safe per
+/// the SDK docs but not yet annotated `Sendable`. Revisit when the SDK
+/// adopts strict concurrency.
+struct RealStationRepository: StationRepository, @unchecked Sendable {
 
     private let db: Firestore
 
