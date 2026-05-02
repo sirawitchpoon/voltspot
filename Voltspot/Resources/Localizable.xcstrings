@@ -94,6 +94,74 @@
         }
       }
     },
+    "auth.error.federatedNotSupported" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This sign-in method is not available."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยังไม่รองรับการเข้าสู่ระบบรูปแบบนี้"
+          }
+        }
+      }
+    },
+    "auth.error.federatedTokenMissing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not get a valid sign-in token. Please try again."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่สามารถรับ token การเข้าสู่ระบบ กรุณาลองอีกครั้ง"
+          }
+        }
+      }
+    },
+    "auth.divider.or" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "or"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หรือ"
+          }
+        }
+      }
+    },
+    "auth.continueWithGoogle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue with Google"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เข้าสู่ระบบด้วย Google"
+          }
+        }
+      }
+    },
     "auth.mode" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != nil;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isGatewayServiceAccount() {
+      return isSignedIn()
+        && request.auth.token.firebase.sign_in_provider == 'custom'
+        && request.auth.token.role == 'gateway';
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /partners/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /stations/{stationId} {
+      allow read: if isSignedIn();
+      allow write: if isGatewayServiceAccount()
+        || (isSignedIn()
+            && request.auth.uid == request.resource.data.partnerId);
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow write: if isGatewayServiceAccount();
+    }
+
+    match /connector_status/{key} {
+      allow read: if isSignedIn();
+      allow write: if isGatewayServiceAccount();
+    }
+  }
+}

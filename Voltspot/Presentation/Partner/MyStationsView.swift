@@ -27,7 +27,7 @@ struct MyStationsView: View {
             .toolbarBackground(Color.appSurface, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .task {
-                stations = (try? await MockStationRepository().nearbyStations(
+                stations = (try? await RealStationRepository().nearbyStations(
                     near: .init(
                         latitude: AppConfig.defaultMapCenterLat,
                         longitude: AppConfig.defaultMapCenterLon

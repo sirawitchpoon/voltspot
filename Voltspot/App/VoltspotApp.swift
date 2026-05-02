@@ -1,3 +1,4 @@
+import FirebaseCore
 import SwiftUI
 
 @main
@@ -5,7 +6,10 @@ struct VoltspotApp: App {
     @State private var session: AppSession
 
     init() {
-        let auth = MockAuthRepository(keychain: KeychainStore())
+        FirebaseApp.configure()
+        GoogleSignInCoordinator.configure()
+
+        let auth = RealAuthRepository()
         let rolePref = RolePreferenceStore()
         _session = State(initialValue: AppSession(
             authRepository: auth,
@@ -17,6 +21,12 @@ struct VoltspotApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                .onOpenURL { url in
+                    _ = GoogleSignInCoordinator.handle(url: url)
+                }
+                .task {
+                    await GoogleSignInCoordinator.restorePreviousSignInIfNeeded()
+                }
         }
     }
 }

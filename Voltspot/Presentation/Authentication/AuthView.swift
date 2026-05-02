@@ -1,3 +1,4 @@
+import AuthenticationServices
 import SwiftUI
 
 struct AuthView: View {
@@ -34,9 +35,12 @@ struct AuthView: View {
         }
         .onAppear {
             if viewModel == nil {
+                let auth = RealAuthRepository()
                 viewModel = AuthViewModel(
-                    signIn: SignInUseCase(authRepository: MockAuthRepository(keychain: KeychainStore())),
-                    signUp: SignUpUseCase(authRepository: MockAuthRepository(keychain: KeychainStore())),
+                    signIn: SignInUseCase(authRepository: auth),
+                    signUp: SignUpUseCase(authRepository: auth),
+                    signInWithApple: SignInWithAppleUseCase(authRepository: auth),
+                    signInWithGoogle: SignInWithGoogleUseCase(authRepository: auth),
                     session: session
                 )
             }
@@ -99,12 +103,61 @@ private struct AuthForm: View {
                 Task { await viewModel.submit() }
             }
             .padding(.top, AppSpacing.sm)
+
+            FederatedAuthSection(viewModel: viewModel)
+                .padding(.top, AppSpacing.sm)
         }
     }
 
     private var passwordHintColor: Color {
         if viewModel.password.isEmpty { return .appFg3 }
         return viewModel.passwordMeetsMinimum ? .appAccent : .appDanger
+    }
+}
+
+private struct FederatedAuthSection: View {
+    @Bindable var viewModel: AuthViewModel
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.sm) {
+                Rectangle().fill(Color.appRule).frame(height: 1)
+                Text("auth.divider.or")
+                    .font(.appText(12, weight: .medium))
+                    .foregroundStyle(Color.appFg3)
+                Rectangle().fill(Color.appRule).frame(height: 1)
+            }
+
+            SignInWithAppleButton(.continue) { request in
+                viewModel.prepareAppleRequest(request)
+            } onCompletion: { result in
+                Task { await viewModel.handleAppleResult(result) }
+            }
+            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+            .frame(height: 50)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+
+            Button {
+                Task { await viewModel.submitGoogle() }
+            } label: {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "g.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                    Text("auth.continueWithGoogle")
+                        .font(.appText(15, weight: .semibold))
+                }
+                .foregroundStyle(Color.appFg)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Color.appSurface2, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                        .stroke(Color.appRule, lineWidth: 1)
+                )
+            }
+            .disabled(viewModel.isWorking)
+        }
     }
 }
 

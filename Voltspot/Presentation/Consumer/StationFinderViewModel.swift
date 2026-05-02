@@ -15,7 +15,7 @@ final class StationFinderViewModel {
 
     init() {
         self.findNearby = FindNearbyStationsUseCase(
-            stationRepository: MockStationRepository()
+            stationRepository: RealStationRepository()
         )
         self.cameraPosition = .region(
             MKCoordinateRegion(
