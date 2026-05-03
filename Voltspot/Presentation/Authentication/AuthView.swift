@@ -11,15 +11,20 @@ struct AuthView: View {
                 Color.appBg.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 0) {
-                        ZStack {
-                            Color.appAccentTint
-                            WeavePattern()
-                            VStack {
-                                Spacer()
-                                BrandHeader(subtitle: "auth.subtitle")
-                                Spacer()
+                        ZStack(alignment: .topTrailing) {
+                            ZStack {
+                                Color.appAccentTint
+                                WeavePattern()
+                                VStack {
+                                    Spacer()
+                                    BrandHeader(subtitle: "auth.subtitle")
+                                    Spacer()
+                                }
+                                .padding(.bottom, AppSpacing.xl)
                             }
-                            .padding(.bottom, AppSpacing.xl)
+                            LanguageToggle()
+                                .padding(.top, AppSpacing.lg)
+                                .padding(.trailing, AppSpacing.lg)
                         }
                         .frame(height: 240)
 

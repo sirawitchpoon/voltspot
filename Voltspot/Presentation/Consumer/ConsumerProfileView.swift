@@ -28,6 +28,10 @@ struct ConsumerProfileView: View {
                             ProfileRow(label: "profile.role", value: String(localized: "role.consumer.title"))
                         }
 
+                        ProfileSection(title: "profile.section.preferences") {
+                            LanguageToggle(style: .row)
+                        }
+
                         ProfileSection(title: "profile.section.actions") {
                             ProfileButton(label: "profile.switchRole", icon: "arrow.triangle.2.circlepath") {
                                 session.clearRole()
