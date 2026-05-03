@@ -10,9 +10,11 @@ struct VoltspotApp: App {
         GoogleSignInCoordinator.configure()
 
         let auth = RealAuthRepository()
+        let profile = RealUserProfileRepository()
         let rolePref = RolePreferenceStore()
         _session = State(initialValue: AppSession(
             authRepository: auth,
+            userProfileRepository: profile,
             rolePreferenceStore: rolePref
         ))
     }
