@@ -278,13 +278,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contains a letter"
+            "value" : "Contains a letter (a–z, A–Z)"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "มีตัวอักษร"
+            "value" : "มีตัวอักษร (เช่น a, B, ก)"
           }
         }
       }
@@ -295,13 +295,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contains a number"
+            "value" : "Contains a number (0–9)"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "มีตัวเลข"
+            "value" : "มีตัวเลข (0–9)"
           }
         }
       }
