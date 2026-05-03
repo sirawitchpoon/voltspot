@@ -19,9 +19,22 @@
 		193149802FA57DA00090E13D /* Voltspot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Voltspot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		196013E62FA6DCD8005A1385 /* Exceptions for "Voltspot" folder in "Voltspot" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1931497F2FA57DA00090E13D /* Voltspot */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		193149822FA57DA00090E13D /* Voltspot */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				196013E62FA6DCD8005A1385 /* Exceptions for "Voltspot" folder in "Voltspot" target */,
+			);
 			path = Voltspot;
 			sourceTree = "<group>";
 		};
@@ -287,6 +300,7 @@
 				DEVELOPMENT_TEAM = 8HYS9A9BGN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Voltspot/Info.plist;
 				INFOPLIST_KEY_CFBundleDevelopmentRegion = th;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used to show charging stations near you on the map.";
 				INFOPLIST_KEY_UIAppFonts = "Sarabun-Regular.ttf Sarabun-Medium.ttf Sarabun-SemiBold.ttf Sarabun-Bold.ttf IBMPlexMono-Regular.ttf IBMPlexMono-Medium.ttf IBMPlexMono-SemiBold.ttf";
@@ -323,6 +337,7 @@
 				DEVELOPMENT_TEAM = 8HYS9A9BGN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Voltspot/Info.plist;
 				INFOPLIST_KEY_CFBundleDevelopmentRegion = th;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used to show charging stations near you on the map.";
 				INFOPLIST_KEY_UIAppFonts = "Sarabun-Regular.ttf Sarabun-Medium.ttf Sarabun-SemiBold.ttf Sarabun-Bold.ttf IBMPlexMono-Regular.ttf IBMPlexMono-Medium.ttf IBMPlexMono-SemiBold.ttf";
