@@ -1,6 +1,13 @@
 import AuthenticationServices
 import Foundation
 import Observation
+import SwiftUI
+
+struct PasswordRule: Identifiable {
+    let id: String
+    let label: LocalizedStringKey
+    let passed: Bool
+}
 
 @MainActor
 @Observable
@@ -36,13 +43,37 @@ final class AuthViewModel {
         self.session = session
     }
 
-    var passwordMeetsMinimum: Bool {
-        password.count >= AppConfig.minimumPasswordLength
+    /// Live checklist used in sign-up mode. Length + letter + digit follows
+    /// NIST 800-63B guidance — length is the strongest factor; we add a
+    /// minimal letter/digit check so common-word-only entries get flagged
+    /// without making complexity onerous.
+    var passwordRules: [PasswordRule] {
+        [
+            PasswordRule(
+                id: "length",
+                label: "auth.password.rule.length \(AppConfig.minimumPasswordLength)",
+                passed: password.count >= AppConfig.minimumPasswordLength
+            ),
+            PasswordRule(
+                id: "letter",
+                label: "auth.password.rule.letter",
+                passed: password.range(of: "\\p{L}", options: .regularExpression) != nil
+            ),
+            PasswordRule(
+                id: "number",
+                label: "auth.password.rule.number",
+                passed: password.range(of: "\\d", options: .regularExpression) != nil
+            ),
+        ]
+    }
+
+    var passwordMeetsAllRules: Bool {
+        passwordRules.allSatisfy(\.passed)
     }
 
     var canSubmit: Bool {
         guard !email.isEmpty, !password.isEmpty else { return false }
-        if mode == .signUp { return passwordMeetsMinimum }
+        if mode == .signUp { return passwordMeetsAllRules }
         return true
     }
 

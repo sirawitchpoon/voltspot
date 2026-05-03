@@ -50,6 +50,7 @@ struct AuthView: View {
 
 private struct AuthForm: View {
     @Bindable var viewModel: AuthViewModel
+    @FocusState private var passwordFocused: Bool
 
     var body: some View {
         VStack(spacing: AppSpacing.lg) {
@@ -76,17 +77,20 @@ private struct AuthForm: View {
                     autocorrect: false
                 )
 
-                AppSecureField(title: "auth.password", text: $viewModel.password)
-            }
+                AppPasswordField(
+                    title: "auth.password",
+                    text: $viewModel.password,
+                    isFocused: $passwordFocused
+                )
 
-            if viewModel.mode == .signUp {
-                HStack {
-                    Text("auth.password.requirement \(AppConfig.minimumPasswordLength)")
-                        .font(.appText(12))
-                        .foregroundStyle(passwordHintColor)
-                    Spacer()
+                if viewModel.mode == .signUp,
+                   passwordFocused || !viewModel.password.isEmpty {
+                    PasswordRulesPanel(rules: viewModel.passwordRules)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
+            .animation(.easeOut(duration: 0.2), value: passwordFocused)
+            .animation(.easeOut(duration: 0.2), value: viewModel.password.isEmpty)
 
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
@@ -108,10 +112,27 @@ private struct AuthForm: View {
                 .padding(.top, AppSpacing.sm)
         }
     }
+}
 
-    private var passwordHintColor: Color {
-        if viewModel.password.isEmpty { return .appFg3 }
-        return viewModel.passwordMeetsMinimum ? .appAccent : .appDanger
+private struct PasswordRulesPanel: View {
+    let rules: [PasswordRule]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(rules) { rule in
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: rule.passed ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(rule.passed ? Color.appAccent : Color.appFg3)
+                        .contentTransition(.symbolEffect(.replace))
+                    Text(rule.label)
+                        .font(.appText(12))
+                        .foregroundStyle(rule.passed ? Color.appFg2 : Color.appFg3)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.xs)
     }
 }
 
@@ -181,16 +202,43 @@ private struct AppTextField: View {
     }
 }
 
-private struct AppSecureField: View {
+private struct AppPasswordField: View {
     let title: LocalizedStringKey
     @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+
+    @State private var isRevealed = false
 
     var body: some View {
-        SecureField(title, text: $text)
+        HStack(spacing: 0) {
+            Group {
+                if isRevealed {
+                    TextField(title, text: $text)
+                        .focused(isFocused)
+                } else {
+                    SecureField(title, text: $text)
+                        .focused(isFocused)
+                }
+            }
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled(true)
             .font(.appText(15))
             .foregroundStyle(Color.appFg)
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.vertical, 14)
-            .background(Color.appSurface2, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+
+            Button {
+                isRevealed.toggle()
+            } label: {
+                Image(systemName: isRevealed ? "eye.slash" : "eye")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(Color.appFg3)
+                    .frame(width: 32, height: 32)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .accessibilityLabel(Text(isRevealed ? "auth.password.hide" : "auth.password.show"))
+        }
+        .padding(.leading, AppSpacing.lg)
+        .padding(.trailing, AppSpacing.sm)
+        .padding(.vertical, 8)
+        .background(Color.appSurface2, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
     }
 }

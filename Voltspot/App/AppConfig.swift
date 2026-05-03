@@ -18,5 +18,5 @@ enum AppConfig {
     static let defaultMapCenterLon: Double = 100.5018
     static let defaultMapSpanDegrees: Double = 8.0
 
-    static let minimumPasswordLength: Int = 6
+    static let minimumPasswordLength: Int = 8
 }
