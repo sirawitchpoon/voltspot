@@ -11,6 +11,7 @@ final class StationFinderViewModel {
     var selectedStation: Station?
     var cameraPosition: MapCameraPosition
     var isLoading: Bool = false
+    var loadError: Error?
 
     private(set) var visibleRegion: MKCoordinateRegion
     private let findNearby: FindNearbyStationsUseCase
@@ -65,12 +66,21 @@ final class StationFinderViewModel {
     private func loadStations(in region: MKCoordinateRegion) async {
         let radiusKm = Self.radiusKm(for: region)
         isLoading = true
+        loadError = nil
         defer { isLoading = false }
         do {
             stations = try await findNearby(near: region.center, radiusKm: radiusKm)
+        } catch is CancellationError {
+            // Debounce cancelled the previous task — leave stations + error untouched.
+            return
         } catch {
             stations = []
+            loadError = error
         }
+    }
+
+    func retry() async {
+        await loadStations(in: visibleRegion)
     }
 
     private func applyZoom(scale: Double) {

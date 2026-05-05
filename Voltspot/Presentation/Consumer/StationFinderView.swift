@@ -6,7 +6,7 @@ struct StationFinderView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
+            ZStack {
                 Map(position: $viewModel.cameraPosition) {
                     ForEach(viewModel.stations) { station in
                         Annotation(station.name, coordinate: station.coordinate) {
@@ -22,12 +22,31 @@ struct StationFinderView: View {
                     viewModel.updateRegion(context.region)
                 }
 
-                ZoomControls(
-                    onZoomIn: { viewModel.zoomIn() },
-                    onZoomOut: { viewModel.zoomOut() }
-                )
-                .padding(.trailing, AppSpacing.lg)
-                .padding(.bottom, AppSpacing.xxl)
+                VStack {
+                    if let banner = currentBanner {
+                        StationStatusBanner(
+                            kind: banner,
+                            onRetry: banner == .error ? {
+                                Task { await viewModel.retry() }
+                            } : nil
+                        )
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.sm)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ZoomControls(
+                            onZoomIn: { viewModel.zoomIn() },
+                            onZoomOut: { viewModel.zoomOut() }
+                        )
+                    }
+                    .padding(.trailing, AppSpacing.lg)
+                    .padding(.bottom, AppSpacing.xxl)
+                }
+                .animation(.easeOut(duration: 0.2), value: viewModel.stations.isEmpty)
+                .animation(.easeOut(duration: 0.2), value: viewModel.loadError != nil)
             }
             .navigationTitle("consumer.tab.find")
             .navigationBarTitleDisplayMode(.inline)
@@ -40,6 +59,61 @@ struct StationFinderView: View {
                     .presentationDragIndicator(.hidden)
             }
         }
+    }
+
+    private var currentBanner: StationStatusBanner.Kind? {
+        if viewModel.loadError != nil { return .error }
+        if !viewModel.isLoading, viewModel.stations.isEmpty { return .empty }
+        return nil
+    }
+}
+
+private struct StationStatusBanner: View {
+    enum Kind { case empty, error }
+
+    let kind: Kind
+    let onRetry: (() -> Void)?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: AppSpacing.md) {
+            Image(systemName: kind == .empty ? "mappin.slash" : "wifi.exclamationmark")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.appAccent)
+                .frame(width: 24)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(kind == .empty ? "stations.empty.title" : "stations.error.title")
+                    .font(.appText(13, weight: .semibold))
+                    .foregroundStyle(Color.appFg)
+                Text(kind == .empty ? "stations.empty.description" : "stations.error.description")
+                    .font(.appText(11))
+                    .foregroundStyle(Color.appFg3)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
+            if let onRetry, kind == .error {
+                Button(action: onRetry) {
+                    Text("common.retry")
+                        .font(.appText(12, weight: .semibold))
+                        .foregroundStyle(Color.appAccent)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.sm)
+                        .background(Color.appAccentTint, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(AppSpacing.md)
+        .background(Color.appSurface, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .stroke(Color.appRule, lineWidth: 1)
+        )
+        .appShadow(.card)
     }
 }
 

@@ -119,6 +119,12 @@ actor RealAuthRepository: AuthRepository {
         let ns = error as NSError
         guard ns.domain == AuthErrorDomain,
               let code = AuthErrorCode(rawValue: ns.code) else {
+            // URLError surfaces here when the request never reaches Firebase
+            // (airplane mode, captive portal). Most useful to the user as a
+            // network message rather than the generic "unknown" fallback.
+            if (error as NSError).domain == NSURLErrorDomain {
+                return AuthError.networkUnavailable
+            }
             return error
         }
         switch code {
@@ -126,6 +132,14 @@ actor RealAuthRepository: AuthRepository {
             return AuthError.invalidCredentials
         case .emailAlreadyInUse, .credentialAlreadyInUse:
             return AuthError.emailAlreadyInUse
+        case .weakPassword:
+            return AuthError.weakPassword
+        case .networkError:
+            return AuthError.networkUnavailable
+        case .tooManyRequests:
+            return AuthError.tooManyRequests
+        case .userDisabled:
+            return AuthError.userDisabled
         default:
             return AuthError.unknown
         }

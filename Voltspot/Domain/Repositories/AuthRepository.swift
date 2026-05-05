@@ -23,6 +23,10 @@ extension AuthRepository {
 enum AuthError: LocalizedError, Sendable {
     case invalidCredentials
     case emailAlreadyInUse
+    case weakPassword
+    case networkUnavailable
+    case tooManyRequests
+    case userDisabled
     case federatedNotSupported
     case federatedTokenMissing
     case unknown
@@ -33,6 +37,14 @@ enum AuthError: LocalizedError, Sendable {
             return String(localized: "auth.error.invalidCredentials")
         case .emailAlreadyInUse:
             return String(localized: "auth.error.emailAlreadyInUse")
+        case .weakPassword:
+            return String(localized: "auth.error.weakPassword")
+        case .networkUnavailable:
+            return String(localized: "auth.error.networkUnavailable")
+        case .tooManyRequests:
+            return String(localized: "auth.error.tooManyRequests")
+        case .userDisabled:
+            return String(localized: "auth.error.userDisabled")
         case .federatedNotSupported:
             return String(localized: "auth.error.federatedNotSupported")
         case .federatedTokenMissing:
