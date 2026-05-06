@@ -15,5 +15,14 @@
 			</array>
 		</dict>
 	</array>
+	<!-- App Transport Security: allow plain http to localhost for development -->
+	<!-- builds. Production traffic goes to Cloud Run over https — App Store -->
+	<!-- review reads NSAllowsLocalNetworking as "developer-only escape hatch" -->
+	<!-- and accepts it without requiring a justification beyond debugging. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

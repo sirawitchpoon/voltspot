@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/sirawitchpoon/voltspot/backend/ocpp-gateway/internal/auth"
@@ -20,9 +20,10 @@ import (
 // kick off remote start/stop operations. Auth is provided by the
 // auth.Middleware — handlers here trust ctx contains a verified User.
 type RESTHandler struct {
-	Hub       *Hub
-	Logger    *slog.Logger
-	Firestore *firestore.Writer
+	Hub           *Hub
+	Logger        *slog.Logger
+	Firestore     *firestore.Writer
+	PendingStarts *PendingStarts
 
 	// CallTimeout caps how long the REST handler waits for the
 	// charger's reply to a CSMS-initiated Call. Independent of the
@@ -40,14 +41,6 @@ func (h *RESTHandler) Routes() http.Handler {
 	mux.HandleFunc("POST /api/stations/{stationId}/connectors/{connectorId}/remote-start", h.remoteStart)
 	mux.HandleFunc("POST /api/sessions/{transactionId}/remote-stop", h.remoteStop)
 	return mux
-}
-
-// remoteStartRequest is the body the iOS app POSTs. idTag identifies
-// the user side of the Authorize flow — for MVP we set it from the
-// authenticated uid so the Gateway can correlate sessions to users
-// without integrating an RFID layer.
-type remoteStartRequest struct {
-	IDTag string `json:"idTag"` // optional; defaults to user.UID
 }
 
 func (h *RESTHandler) remoteStart(w http.ResponseWriter, r *http.Request) {
@@ -70,22 +63,29 @@ func (h *RESTHandler) remoteStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body remoteStartRequest
+	// Drain any body the client sent (could be empty); iOS doesn't
+	// pass anything here today, but accepting up to 8KB future-proofs
+	// the route for vendor-specific options like a preferred
+	// max-current.
 	if r.ContentLength > 0 {
-		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "malformed JSON: "+err.Error())
-			return
-		}
-	}
-	idTag := strings.TrimSpace(body.IDTag)
-	if idTag == "" {
-		idTag = user.UID
+		_, _ = io.Copy(io.Discard, http.MaxBytesReader(w, r.Body, 8<<10))
 	}
 
 	conn := h.Hub.Lookup(stationID)
 	if conn == nil {
 		// Charger isn't online. iOS app shows "charger unavailable".
 		writeJSONError(w, http.StatusServiceUnavailable, "charger offline")
+		return
+	}
+
+	// Generate a short random idTag so we can map the charger's
+	// follow-up StartTransaction back to the Firebase uid that
+	// initiated this request. Without this, /sessions docs created
+	// from charger-initiated flows would have no userId and the iOS
+	// "my charging history" view would be empty.
+	idTag, err := h.PendingStarts.Issue(user.UID, stationID, connectorID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "failed to allocate idTag")
 		return
 	}
 
@@ -104,6 +104,7 @@ func (h *RESTHandler) remoteStart(w http.ResponseWriter, r *http.Request) {
 			slog.String("station", stationID),
 			slog.Int("connector", connectorID),
 			slog.String("err", err.Error()))
+		// Charger never confirmed — the pending entry will TTL-evict.
 		writeRemoteCallError(w, err)
 		return
 	}
@@ -116,6 +117,9 @@ func (h *RESTHandler) remoteStart(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if resp.Status != ocpp.RemoteAccepted {
+		// Reclaim the pending start so the slot doesn't stay reserved
+		// — the charger isn't going to send a StartTransaction now.
+		_ = h.PendingStarts.Claim(idTag)
 		w.WriteHeader(http.StatusConflict)
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status":  string(resp.Status),

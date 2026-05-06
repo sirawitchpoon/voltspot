@@ -23,10 +23,11 @@ import (
 // in Firestore (or in the active session map below for fast access
 // during a session).
 type AppDelegate struct {
-	Logger    *slog.Logger
-	Firestore *firestore.Writer
-	Pricing   PricingProvider
-	TxIDs     *transactions.Allocator
+	Logger        *slog.Logger
+	Firestore     *firestore.Writer
+	Pricing       PricingProvider
+	TxIDs         *transactions.Allocator
+	PendingStarts *PendingStarts // app-initiated user linkage; nil ⇒ no linkage
 
 	// activeSessions caches the {transactionId → session info} we need
 	// to compute MeterValues cost without a Firestore round-trip on
@@ -48,7 +49,7 @@ type AppDelegate struct {
 type activeSession struct {
 	stationID    string
 	connectorID  int
-	userID       string
+	userID       string // empty for charger-initiated (RFID) sessions
 	idTag        string
 	meterStartWh int
 	tariff       pricing.Tariff
@@ -68,17 +69,24 @@ type PricingProvider interface {
 type StationResolver func(chargePointID string) string
 
 // NewAppDelegate constructs an AppDelegate with sane defaults.
+//
+// Pass `pendingStarts` to enable iOS-initiated session linkage; when
+// nil, charger-initiated StartTransactions still produce session
+// docs but with `userId=""` (RFID flow without our future /idtags
+// integration).
 func NewAppDelegate(
 	logger *slog.Logger,
 	fs *firestore.Writer,
 	tariffs PricingProvider,
 	txIDs *transactions.Allocator,
+	pendingStarts *PendingStarts,
 ) *AppDelegate {
 	return &AppDelegate{
 		Logger:          logger,
 		Firestore:       fs,
 		Pricing:         tariffs,
 		TxIDs:           txIDs,
+		PendingStarts:   pendingStarts,
 		activeSessions:  make(map[int]*activeSession),
 		StationResolver: defaultStationResolver,
 	}
@@ -280,18 +288,26 @@ func (d *AppDelegate) onStartTransaction(ctx context.Context, cpID string, raw j
 		now = time.Now().UTC()
 	}
 
+	// If the iOS app initiated this session via /api/.../remote-start,
+	// the REST handler stashed a pending entry keyed off the idTag we
+	// passed to the charger. Claim it now to stamp the originating
+	// Firebase uid onto the session doc — that's what makes the user's
+	// charging history populate.
+	var userID string
+	if d.PendingStarts != nil {
+		if claim := d.PendingStarts.Claim(req.IDTag); claim != nil {
+			userID = claim.UserID
+		}
+	}
+
 	if err := d.Firestore.SessionStart(ctx, firestore.SessionStart{
 		TransactionID: txID,
-		// userId is the Firebase uid; we don't have it from the OCPP
-		// idTag yet (mapping happens in the future Authorize MVP).
-		// For now, leave blank — the iOS app's session listener will
-		// still see the doc by stationId+connectorId.
-		UserID:       "",
-		StationID:    stationID,
-		ConnectorID:  req.ConnectorID,
-		IDTag:        req.IDTag,
-		StartTime:    now,
-		MeterStartWh: req.MeterStart,
+		UserID:        userID, // empty for charger-initiated (RFID) flow
+		StationID:     stationID,
+		ConnectorID:   req.ConnectorID,
+		IDTag:         req.IDTag,
+		StartTime:     now,
+		MeterStartWh:  req.MeterStart,
 	}); err != nil {
 		d.Logger.Error("session start write",
 			slog.Int("tx", txID),
@@ -305,6 +321,7 @@ func (d *AppDelegate) onStartTransaction(ctx context.Context, cpID string, raw j
 	d.activeSessions[txID] = &activeSession{
 		stationID:    stationID,
 		connectorID:  req.ConnectorID,
+		userID:       userID,
 		idTag:        req.IDTag,
 		meterStartWh: req.MeterStart,
 		tariff:       tariff,

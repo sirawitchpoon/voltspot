@@ -3,6 +3,23 @@ import SwiftUI
 struct StationDetailView: View {
     let station: Station
     @Environment(\.dismiss) private var dismiss
+    @State private var isStarting: Bool = false
+    @State private var startError: String?
+
+    /// Hold the repository as state so the same instance survives
+    /// re-renders. Default to the production implementation; tests
+    /// can inject a mock by constructing the view with the
+    /// `repository:` argument.
+    @State private var repository: any SessionRepository
+
+    init(station: Station, repository: any SessionRepository = RealSessionRepository()) {
+        self.station = station
+        _repository = State(initialValue: repository)
+    }
+
+    private var firstAvailableConnector: Connector? {
+        station.connectors.first { $0.status == .available }
+    }
 
     var body: some View {
         ZStack {
@@ -12,16 +29,47 @@ struct StationDetailView: View {
                     hero
                     tariffStrip
                     connectorsSection
+                    if let startError {
+                        Text(startError)
+                            .font(.appText(13, weight: .medium))
+                            .foregroundStyle(Color.appDanger)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     Spacer(minLength: AppSpacing.lg)
                     PrimaryButton(
                         title: "station.startSession",
                         icon: "bolt.fill",
-                        isDisabled: !station.connectors.contains { $0.status == .available }
-                    ) { }
+                        isLoading: isStarting,
+                        isDisabled: firstAvailableConnector == nil
+                    ) {
+                        Task { await startSession() }
+                    }
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.bottom, AppSpacing.xl)
             }
+        }
+    }
+
+    /// Kicks off a session against the first available connector.
+    /// On success the SessionView listener picks up the new doc and
+    /// renders the live charging UI; we dismiss the detail sheet so
+    /// the user sees the tab change naturally.
+    private func startSession() async {
+        guard let connector = firstAvailableConnector else { return }
+        startError = nil
+        isStarting = true
+        defer { isStarting = false }
+        do {
+            _ = try await repository.startSession(
+                stationId: station.id,
+                connectorId: connector.id
+            )
+            dismiss()
+        } catch let error as GatewayError {
+            startError = error.errorDescription
+        } catch {
+            startError = error.localizedDescription
         }
     }
 

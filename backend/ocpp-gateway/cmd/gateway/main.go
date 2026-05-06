@@ -42,6 +42,7 @@ type config struct {
 	callTimeout        time.Duration
 	restCallTimeout    time.Duration
 	shutdownTimeout    time.Duration
+	pendingStartTTL    time.Duration
 }
 
 func loadConfig() (config, error) {
@@ -55,6 +56,7 @@ func loadConfig() (config, error) {
 		callTimeout:        parseDuration("CALL_TIMEOUT", 30*time.Second),
 		restCallTimeout:    parseDuration("REST_CALL_TIMEOUT", 10*time.Second),
 		shutdownTimeout:    parseDuration("SHUTDOWN_TIMEOUT", 25*time.Second),
+		pendingStartTTL:    parseDuration("PENDING_START_TTL", 5*time.Minute),
 	}
 	if c.firebaseProjectID == "" {
 		return c, errors.New("FIREBASE_PROJECT_ID env var is required")
@@ -118,14 +120,17 @@ func run(ctx context.Context, logger *slog.Logger, cfg config) error {
 
 	// ─── Server stack ──────────────────────────────────────────────
 	hub := server.NewHub()
+	pendingStarts := server.NewPendingStarts(cfg.pendingStartTTL)
 	delegate := server.NewAppDelegate(
 		logger,
 		fsWriter,
 		&server.FirestoreTariffProvider{Writer: fsWriter},
 		txAllocator,
+		pendingStarts,
 	)
 
 	hub.StartIdleSweeper(ctx, cfg.idleSweepInterval, cfg.idleAfter)
+	startPendingStartsSweeper(ctx, pendingStarts, cfg.idleSweepInterval)
 
 	wsHandler := &server.WSHandler{
 		Hub:            hub,
@@ -136,10 +141,11 @@ func run(ctx context.Context, logger *slog.Logger, cfg config) error {
 	}
 
 	restHandler := &server.RESTHandler{
-		Hub:         hub,
-		Logger:      logger,
-		Firestore:   fsWriter,
-		CallTimeout: cfg.restCallTimeout,
+		Hub:           hub,
+		Logger:        logger,
+		Firestore:     fsWriter,
+		PendingStarts: pendingStarts,
+		CallTimeout:   cfg.restCallTimeout,
 	}
 
 	health := &server.HealthHandler{Hub: hub}
@@ -195,6 +201,29 @@ func run(ctx context.Context, logger *slog.Logger, cfg config) error {
 	hub.Close()
 	logger.Info("shutdown complete")
 	return nil
+}
+
+// startPendingStartsSweeper runs a periodic eviction of expired
+// pending-starts entries so the in-memory map doesn't grow with
+// abandoned remote-start attempts. Sweeps at the same cadence as the
+// hub's idle sweeper because both are reasonably bounded by the same
+// "things that should have happened by now" interval.
+func startPendingStartsSweeper(ctx context.Context, p *server.PendingStarts, interval time.Duration) {
+	if interval <= 0 {
+		interval = 2 * time.Minute
+	}
+	go func() {
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				p.EvictExpired()
+			}
+		}
+	}()
 }
 
 func newFirebaseApp(ctx context.Context, cfg config) (*firebase.App, error) {
