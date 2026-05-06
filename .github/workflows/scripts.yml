@@ -1,0 +1,55 @@
+name: Scripts
+
+# Sanity-checks the Node.js operational scripts in scripts/ — syntax
+# parses, dependencies install cleanly, --dry-run executes without
+# touching Firestore. Triggered only when scripts/ changes so iOS
+# commits don't pay the runner cost.
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/scripts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/scripts.yml'
+
+concurrency:
+  group: scripts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check
+        run: node --check seed-stations.js
+
+      - name: Dry run
+        # Verifies the geohash encoder + station data format don't
+        # regress. Doesn't talk to Firestore (no service-account.json
+        # in CI) — the script's --dry-run branch exits before the
+        # admin SDK init.
+        run: node seed-stations.js --dry-run

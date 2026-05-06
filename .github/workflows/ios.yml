@@ -1,0 +1,75 @@
+name: iOS Build
+
+# Verify the iOS app compiles on every PR + every push to main.
+# Runs without code signing (CODE_SIGNING_ALLOWED=NO) — this is a build
+# health check, not a release build. Real signed builds happen via Xcode
+# Organizer / fastlane during TestFlight upload.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  # Cancel in-flight runs for the same ref so a rapid push doesn't pay
+  # twice — only the latest commit on a branch should be verified.
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: xcodebuild
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    env:
+      XCODEBUILD_FLAGS: >-
+        -project Voltspot.xcodeproj
+        -scheme Voltspot
+        -configuration Debug
+        -destination "generic/platform=iOS Simulator"
+        CODE_SIGNING_ALLOWED=NO
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Show toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Stub GoogleService-Info.plist for CI
+        # The real plist is gitignored (contains client API keys) and
+        # FirebaseApp.configure() reads it at *runtime*, not build time —
+        # but if the file is absent, Xcode's Copy Bundle Resources phase
+        # is fine and the build still succeeds. We stub a minimal plist
+        # only to mirror the production layout in case Xcode's
+        # synchronized group ever flips behavior.
+        run: |
+          cat > Voltspot/Resources/GoogleService-Info.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>API_KEY</key><string>ci-stub</string>
+            <key>BUNDLE_ID</key><string>com.voltspot.Voltspot</string>
+            <key>GCM_SENDER_ID</key><string>0</string>
+            <key>GOOGLE_APP_ID</key><string>1:0:ios:ci-stub</string>
+            <key>PROJECT_ID</key><string>ci-stub</string>
+            <key>STORAGE_BUCKET</key><string>ci-stub.appspot.com</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Resolve SwiftPM dependencies
+        run: xcodebuild ${{ env.XCODEBUILD_FLAGS }} -resolvePackageDependencies
+
+      - name: Build
+        run: xcodebuild ${{ env.XCODEBUILD_FLAGS }} build | xcbeautify --renderer github-actions
+        # xcbeautify is preinstalled on the macos-15 runner image. If
+        # this ever fails with "command not found", fall back to plain
+        # `xcodebuild ... build` — output stays in raw form but works.
