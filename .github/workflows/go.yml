@@ -1,0 +1,62 @@
+name: Go Backend
+
+# OCPP Gateway compile + vet + race-detector tests on every PR + push
+# to main that touches the Go service. Path-filtered so iOS commits
+# don't burn macOS minutes on this workflow.
+
+on:
+  pull_request:
+    paths:
+      - 'backend/ocpp-gateway/**'
+      - '.github/workflows/go.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/ocpp-gateway/**'
+      - '.github/workflows/go.yml'
+
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: build + vet + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: backend/ocpp-gateway
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/ocpp-gateway/go.mod
+          cache: true
+          cache-dependency-path: backend/ocpp-gateway/go.sum
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Verify modules tidy
+        run: |
+          go mod tidy
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "go.mod / go.sum out of date — run 'go mod tidy' locally and commit"
+            git diff
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test (race detector)
+        run: go test -race -count=1 ./...

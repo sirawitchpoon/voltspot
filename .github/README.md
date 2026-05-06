@@ -11,6 +11,7 @@ free minutes/month, very unlikely at solo-dev pace).
 |---|---|---|
 | `workflows/ios.yml` | every PR + every push to `main` | `xcodebuild` health check on macos-15. No code signing — verifies sources still compile. |
 | `workflows/scripts.yml` | PRs + pushes that touch `scripts/**` | Node 20 syntax check + `seed-stations.js --dry-run`. Cheap, fast — only runs when scripts change. |
+| `workflows/go.yml` | PRs + pushes that touch `backend/ocpp-gateway/**` | `go build`, `go vet`, `go test -race`. Verifies tidy state of `go.mod` so dependency drift doesn't sneak in. |
 
 ## What's NOT here yet (deferred)
 

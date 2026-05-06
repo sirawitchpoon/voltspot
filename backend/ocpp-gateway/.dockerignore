@@ -1,0 +1,14 @@
+# Don't ship test files or local artifacts in the image.
+*_test.go
+**/testdata/
+
+# Misc — never copy secrets, IDE state, or local Go cache.
+.env
+.env.*
+*.p8
+*.p12
+*service-account*.json
+.vscode/
+.idea/
+.git/
+README.md
