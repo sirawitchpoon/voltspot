@@ -595,6 +595,23 @@
         }
       }
     },
+    "common.error.signInRequired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to continue."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ"
+          }
+        }
+      }
+    },
     "common.retry" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1032,6 +1049,23 @@
         }
       }
     },
+    "partner.dashboard.activity.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No charging activity this month yet."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยังไม่มีกิจกรรมการชาร์จในเดือนนี้"
+          }
+        }
+      }
+    },
     "partner.dashboard.greeting %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1138,6 +1172,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "การโอน"
+          }
+        }
+      }
+    },
+    "partner.earnings.payouts.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bank payouts go live with the next release."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การโอนเข้าบัญชีจะเริ่มใช้งานในรอบถัดไป"
           }
         }
       }

@@ -22,6 +22,10 @@ struct MockStationRepository: StationRepository {
         Self.allSamples.first { $0.id == id }
     }
 
+    func partnerStations(ownerId: String) async throws -> [Station] {
+        Self.allSamples.filter { $0.partnerId == ownerId }
+    }
+
     private func haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
         let r = 6371.0
         let dLat = (lat2 - lat1) * .pi / 180
@@ -44,7 +48,8 @@ struct MockStationRepository: StationRepository {
                 Connector(id: "stn-bkk-01-c2", kind: .ev, standard: .type2, powerKW: 22, status: .available),
             ],
             tariff: Tariff(pricePerKWhSatang: 750, sessionFeeSatang: 0),
-            supportsDrones: false
+            supportsDrones: false,
+            partnerId: "system-seed"
         ),
         Station(
             id: "stn-bkk-02",
@@ -57,7 +62,8 @@ struct MockStationRepository: StationRepository {
                 Connector(id: "stn-bkk-02-c2", kind: .ev, standard: .ccs2, powerKW: 150, status: .available),
             ],
             tariff: Tariff(pricePerKWhSatang: 850, sessionFeeSatang: 2000),
-            supportsDrones: false
+            supportsDrones: false,
+            partnerId: "system-seed"
         ),
         Station(
             id: "stn-cnx-01",
@@ -69,7 +75,8 @@ struct MockStationRepository: StationRepository {
                 Connector(id: "stn-cnx-01-c1", kind: .ev, standard: .type2, powerKW: 22, status: .available),
             ],
             tariff: Tariff(pricePerKWhSatang: 700, sessionFeeSatang: 0),
-            supportsDrones: false
+            supportsDrones: false,
+            partnerId: "system-seed"
         ),
         Station(
             id: "stn-hkt-01",
@@ -81,7 +88,8 @@ struct MockStationRepository: StationRepository {
                 Connector(id: "stn-hkt-01-c1", kind: .ev, standard: .ccs2, powerKW: 100, status: .available),
             ],
             tariff: Tariff(pricePerKWhSatang: 900, sessionFeeSatang: 1000),
-            supportsDrones: false
+            supportsDrones: false,
+            partnerId: "system-seed"
         ),
         Station(
             id: "stn-rai-01",
@@ -94,7 +102,8 @@ struct MockStationRepository: StationRepository {
                 Connector(id: "stn-rai-01-c2", kind: .drone, standard: .droneXT90, powerKW: 8, status: .available),
             ],
             tariff: Tariff(pricePerKWhSatang: 600, sessionFeeSatang: 500),
-            supportsDrones: true
+            supportsDrones: true,
+            partnerId: "system-seed"
         ),
         Station(
             id: "stn-mix-01",
@@ -107,7 +116,8 @@ struct MockStationRepository: StationRepository {
                 Connector(id: "stn-mix-01-c2", kind: .drone, standard: .droneXT90, powerKW: 8, status: .faulted),
             ],
             tariff: Tariff(pricePerKWhSatang: 720, sessionFeeSatang: 0),
-            supportsDrones: true
+            supportsDrones: true,
+            partnerId: "system-seed"
         ),
     ]
 }

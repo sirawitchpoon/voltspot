@@ -2,38 +2,41 @@ import CoreLocation
 import SwiftUI
 
 struct MyStationsView: View {
-    @State private var stations: [Station] = []
+    @State private var viewModel = MyStationsViewModel()
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appBg.ignoresSafeArea()
-                Group {
-                    if stations.isEmpty {
-                        emptyState
-                    } else {
-                        ScrollView {
-                            VStack(spacing: AppSpacing.md) {
-                                ForEach(stations) { station in
-                                    PartnerStationCard(station: station)
-                                }
-                            }
-                            .padding(AppSpacing.lg)
-                        }
-                    }
-                }
+                content
             }
             .navigationTitle("partner.tab.stations")
             .toolbarBackground(Color.appSurface, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .task {
-                stations = (try? await RealStationRepository().nearbyStations(
-                    near: .init(
-                        latitude: AppConfig.defaultMapCenterLat,
-                        longitude: AppConfig.defaultMapCenterLon
-                    ),
-                    radiusKm: 1500
-                )) ?? []
+            .task { await viewModel.load() }
+            .refreshable { await viewModel.load() }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let errorMessage = viewModel.errorMessage, viewModel.stations.isEmpty {
+            errorState(message: errorMessage)
+        } else if viewModel.stations.isEmpty, viewModel.isLoading {
+            ProgressView().tint(Color.appAccent)
+        } else if viewModel.stations.isEmpty {
+            emptyState
+        } else {
+            ScrollView {
+                VStack(spacing: AppSpacing.md) {
+                    ForEach(viewModel.stations) { station in
+                        PartnerStationCard(
+                            station: station,
+                            rollup: viewModel.todayByStation[station.id]
+                        )
+                    }
+                }
+                .padding(AppSpacing.lg)
             }
         }
     }
@@ -60,13 +63,46 @@ struct MyStationsView: View {
         }
         .padding(AppSpacing.xl)
     }
+
+    private func errorState(message: String) -> some View {
+        VStack(spacing: AppSpacing.md) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.system(size: 36, weight: .light))
+                .foregroundStyle(Color.appDanger)
+            Text(message)
+                .font(.appText(13))
+                .foregroundStyle(Color.appFg3)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, AppSpacing.xl)
+            Button {
+                Task { await viewModel.load() }
+            } label: {
+                Text("common.retry")
+                    .font(.appText(12, weight: .semibold))
+                    .foregroundStyle(Color.appAccent)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(Color.appAccentTint, in: Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+    }
 }
 
 private struct PartnerStationCard: View {
     let station: Station
+    let rollup: PartnerDailyRollup?
 
     private var liveCount: Int { station.connectors.filter { $0.status == .available }.count }
     private var totalCount: Int { station.connectors.count }
+    private var energyTodayText: String {
+        let kWh = rollup?.energyKWh ?? 0
+        return String(format: "%.1f kWh", kWh)
+    }
+    private var revenueTodayText: String {
+        let baht = Decimal(rollup?.revenueSatang ?? 0) / 100
+        return CurrencyFormatter.thb.string(from: baht)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
@@ -98,8 +134,8 @@ private struct PartnerStationCard: View {
 
             HStack(spacing: AppSpacing.sm) {
                 miniStat(label: "partner.stations.connectors", value: "\(totalCount)")
-                miniStat(label: "partner.stations.energyToday", value: "32.4 kWh")
-                miniStat(label: "partner.stations.revenueToday", value: CurrencyFormatter.thb.string(from: 540))
+                miniStat(label: "partner.stations.energyToday", value: energyTodayText)
+                miniStat(label: "partner.stations.revenueToday", value: revenueTodayText)
             }
         }
         .padding(AppSpacing.lg)

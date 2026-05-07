@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct EarningsView: View {
+    @State private var viewModel = EarningsViewModel()
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -10,6 +12,13 @@ struct EarningsView: View {
                         bigStatCard
                         breakdownRow
                         dailyChartCard
+                        if let errorMessage = viewModel.errorMessage {
+                            Text(errorMessage)
+                                .font(.appText(12))
+                                .foregroundStyle(Color.appDanger)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, AppSpacing.lg)
+                        }
                         payoutsSection
                     }
                     .padding(AppSpacing.lg)
@@ -18,8 +27,12 @@ struct EarningsView: View {
             .navigationTitle("partner.tab.earnings")
             .toolbarBackground(Color.appSurface, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .task { await viewModel.load() }
+            .refreshable { await viewModel.load() }
         }
     }
+
+    // MARK: - Sub-views
 
     private var bigStatCard: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
@@ -31,14 +44,14 @@ struct EarningsView: View {
             }
             .foregroundStyle(Color.appFg3)
 
-            ThaiBahtText(amount: 16425, bold: true)
+            ThaiBahtText(amount: bahtAmount(viewModel.netSatang), bold: true)
                 .font(.appMono(38, weight: .semibold))
                 .foregroundStyle(Color.appFg)
 
             HStack(spacing: 4) {
-                Image(systemName: "arrow.up.right")
+                Image(systemName: "bolt.fill")
                     .font(.system(size: 11, weight: .bold))
-                Text("+12.4%")
+                Text("\(viewModel.monthSessions.count) sessions")
                     .font(.appMono(12, weight: .semibold))
             }
             .foregroundStyle(Color.appAccent)
@@ -54,9 +67,22 @@ struct EarningsView: View {
 
     private var breakdownRow: some View {
         HStack(spacing: AppSpacing.sm) {
-            breakdownItem(label: "partner.earnings.gross", amount: 18250, accent: false)
-            breakdownItem(label: "partner.earnings.commission", amount: -2737, accent: false, danger: true)
-            breakdownItem(label: "partner.earnings.net", amount: 15513, accent: true)
+            breakdownItem(
+                label: "partner.earnings.gross",
+                amount: bahtAmount(viewModel.grossSatang),
+                accent: false
+            )
+            breakdownItem(
+                label: "partner.earnings.commission",
+                amount: -bahtAmount(viewModel.commissionSatang),
+                accent: false,
+                danger: true
+            )
+            breakdownItem(
+                label: "partner.earnings.net",
+                amount: bahtAmount(viewModel.netSatang),
+                accent: true
+            )
         }
     }
 
@@ -77,15 +103,24 @@ struct EarningsView: View {
         )
     }
 
+    /// Daily revenue bar chart over the trailing 30 days. Bars scale
+    /// against whichever bucket has the largest revenue so the chart
+    /// stays useful even on small absolute numbers.
     private var dailyChartCard: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
+        let bins = viewModel.dailyRevenueSatang
+        // bins[0] is today, bins[29] is 29 days ago. Reverse for L→R
+        // chronological reading.
+        let chronological = Array(bins.reversed())
+        let peak = max(chronological.max() ?? 0, 1)
+        return VStack(alignment: .leading, spacing: AppSpacing.md) {
             Text("partner.earnings.daily")
                 .font(.appText(13, weight: .semibold))
                 .foregroundStyle(Color.appFg)
             HStack(alignment: .bottom, spacing: 3) {
-                ForEach(0..<30, id: \.self) { i in
-                    let isLast = i == 29
-                    let h = CGFloat.random(in: 18...80)
+                ForEach(Array(chronological.enumerated()), id: \.offset) { idx, satang in
+                    let isLast = idx == chronological.count - 1
+                    let normalized = Double(satang) / Double(peak)
+                    let h: CGFloat = max(2, CGFloat(normalized) * 80)
                     RoundedRectangle(cornerRadius: 2)
                         .fill(isLast ? Color.appAccent : Color.appAccentTint)
                         .frame(height: h)
@@ -102,6 +137,10 @@ struct EarningsView: View {
         )
     }
 
+    /// Payouts come from a payout pipeline that doesn't exist yet —
+    /// keep the card as a forward-looking empty state so partners
+    /// still see it on the screen and we don't have to redesign once
+    /// the bank-payout integration ships.
     private var payoutsSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text("partner.earnings.payouts")
@@ -109,15 +148,18 @@ struct EarningsView: View {
                 .foregroundStyle(Color.appFg3)
                 .textCase(.uppercase)
                 .padding(.leading, AppSpacing.sm)
-            VStack(spacing: 0) {
-                ForEach(MockPayout.samples) { item in
-                    PayoutRow(item: item)
-                    if item.id != MockPayout.samples.last?.id {
-                        Rectangle().fill(Color.appRule).frame(height: 0.5)
-                            .padding(.leading, AppSpacing.lg)
-                    }
-                }
+            VStack(spacing: AppSpacing.sm) {
+                Image(systemName: "wallet.bifold")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundStyle(Color.appFg3)
+                Text("partner.earnings.payouts.empty")
+                    .font(.appText(12))
+                    .foregroundStyle(Color.appFg3)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.lg)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppSpacing.xl)
             .background(Color.appSurface, in: RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
@@ -125,55 +167,8 @@ struct EarningsView: View {
             )
         }
     }
-}
 
-private struct MockPayout: Identifiable {
-    let id = UUID()
-    let label: String
-    let date: String
-    let amount: Decimal
-    let isPaid: Bool
-
-    static let samples: [MockPayout] = [
-        .init(label: "โอนเข้าบัญชี SCB", date: "30 เม.ย. 2569", amount: 14820, isPaid: true),
-        .init(label: "โอนเข้าบัญชี SCB", date: "31 มี.ค. 2569", amount: 11540, isPaid: true),
-        .init(label: "รอบวันที่ 31 พ.ค.", date: "31 พ.ค. 2569", amount: 15513, isPaid: false),
-    ]
-}
-
-private struct PayoutRow: View {
-    let item: MockPayout
-
-    var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            ZStack {
-                RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                    .fill(item.isPaid ? Color.appAccentTint : Color.appGold.opacity(0.18))
-                Image(systemName: "wallet.bifold")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(item.isPaid ? Color.appAccent : Color.appGold)
-            }
-            .frame(width: 36, height: 36)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.label)
-                    .font(.appText(14, weight: .medium))
-                    .foregroundStyle(Color.appFg)
-                Text(item.date)
-                    .font(.appMono(11))
-                    .foregroundStyle(Color.appFg3)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                ThaiBahtText(amount: item.amount, bold: true)
-                    .font(.appMono(14, weight: .semibold))
-                    .foregroundStyle(Color.appFg)
-                Text(item.isPaid ? "PAID" : "PENDING")
-                    .font(.appMono(9, weight: .semibold))
-                    .foregroundStyle(item.isPaid ? Color.appAccent : Color.appGold)
-            }
-        }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.md)
+    private func bahtAmount(_ satang: Int) -> Decimal {
+        Decimal(satang) / 100
     }
 }

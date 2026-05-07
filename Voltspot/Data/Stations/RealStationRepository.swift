@@ -47,6 +47,21 @@ struct RealStationRepository: StationRepository, @unchecked Sendable {
         return Self.decode(document: snap)
     }
 
+    /// Partner's stations live behind a single equality filter on the
+    /// `partnerId` field. The composite index in
+    /// `deploy/firestore.indexes.json` keeps `(partnerId asc, name asc)`
+    /// so this stays cheap as the partner's portfolio grows. Empty
+    /// array — never nil — when the partner hasn't claimed any
+    /// stations yet, so callers don't need to unwrap before rendering
+    /// an empty state.
+    func partnerStations(ownerId: String) async throws -> [Station] {
+        let snapshot = try await db.collection("stations")
+            .whereField("partnerId", isEqualTo: ownerId)
+            .order(by: "name")
+            .getDocuments()
+        return snapshot.documents.compactMap { Self.decode(document: $0) }
+    }
+
     private static func decode(document: DocumentSnapshot) -> Station? {
         guard let data = document.data() else { return nil }
         guard let name = data["name"] as? String,
@@ -71,6 +86,7 @@ struct RealStationRepository: StationRepository, @unchecked Sendable {
 
         let tariff = Self.decodeTariff(data["tariff"] as? [String: Any])
         let supportsDrones = (data["supportsDrones"] as? Bool) ?? false
+        let partnerId = data["partnerId"] as? String
 
         return Station(
             id: document.documentID,
@@ -80,7 +96,8 @@ struct RealStationRepository: StationRepository, @unchecked Sendable {
             longitude: longitude,
             connectors: connectors,
             tariff: tariff,
-            supportsDrones: supportsDrones
+            supportsDrones: supportsDrones,
+            partnerId: partnerId
         )
     }
 
