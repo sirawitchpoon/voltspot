@@ -13,6 +13,7 @@ struct SessionView: View {
                         session: session,
                         isStopping: viewModel.isStopping,
                         errorMessage: viewModel.errorMessage,
+                        connectorAlert: viewModel.connectorAlert,
                         onStop: { Task { await viewModel.stop() } }
                     )
                 } else {
@@ -61,6 +62,7 @@ private struct ActiveSessionContent: View {
     let session: ChargingSession
     let isStopping: Bool
     let errorMessage: String?
+    let connectorAlert: ConnectorAlert?
     let onStop: () -> Void
 
     /// Live-updating clock so the elapsed-time chip advances each
@@ -79,6 +81,12 @@ private struct ActiveSessionContent: View {
                         .font(.appText(15, weight: .semibold).monospacedDigit())
                         .foregroundStyle(Color.appFg2)
                     StatusBadge(style: .inUse, label: "session.charging")
+                }
+
+                if let connectorAlert {
+                    ConnectorAlertBanner(alert: connectorAlert)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 metricsCard
@@ -179,5 +187,59 @@ private struct ActiveSessionContent: View {
     private var costText: String {
         let baht = Decimal(session.costSatang) / 100
         return CurrencyFormatter.thb.string(from: baht)
+    }
+}
+
+// MARK: - Connector alert banner
+
+/// Inline warning surfaced when `/connector_status` reports a fault
+/// or unavailable state mid-session. The OCPP spec lets the charger
+/// keep a transaction running while reporting an errorCode, so the
+/// banner is informational — the stop button stays enabled.
+private struct ConnectorAlertBanner: View {
+    let alert: ConnectorAlert
+
+    var body: some View {
+        HStack(alignment: .top, spacing: AppSpacing.md) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.appWarning)
+                .frame(width: 24)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("session.alert.fault.title")
+                    .font(.appText(13, weight: .semibold))
+                    .foregroundStyle(Color.appFg)
+                Text(detailText)
+                    .font(.appText(12))
+                    .foregroundStyle(Color.appFg3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(AppSpacing.md)
+        .background(Color.appSurface, in: RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .stroke(Color.appWarning.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    /// Status + errorCode together — both come straight from OCPP and
+    /// are most useful to support staff verbatim, so we don't try to
+    /// localise the codes themselves. `info` is operator-supplied free
+    /// text and may be nil.
+    private var detailText: String {
+        var parts: [String] = []
+        if !alert.status.isEmpty { parts.append(alert.status) }
+        if alert.errorCode != "NoError", !alert.errorCode.isEmpty {
+            parts.append(alert.errorCode)
+        }
+        if let info = alert.info, !info.isEmpty {
+            parts.append(info)
+        }
+        return parts.joined(separator: " · ")
     }
 }

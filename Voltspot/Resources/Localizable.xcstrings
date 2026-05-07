@@ -102,6 +102,40 @@
         }
       }
     },
+    "profile.section.history" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent sessions"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ประวัติการชาร์จ"
+          }
+        }
+      }
+    },
+    "profile.history.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No charging sessions yet. Tap a station to start your first one."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยังไม่มีประวัติการชาร์จ แตะสถานีเพื่อเริ่มชาร์จครั้งแรก"
+          }
+        }
+      }
+    },
     "profile.section.preferences" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -421,6 +455,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง"
+          }
+        }
+      }
+    },
+    "session.alert.fault.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger reported an issue"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตู้ชาร์จแจ้งปัญหา"
           }
         }
       }

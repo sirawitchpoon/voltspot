@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConsumerProfileView: View {
     @Environment(AppSession.self) private var session
+    @State private var viewModel = ConsumerProfileViewModel()
 
     var body: some View {
         NavigationStack {
@@ -28,6 +29,8 @@ struct ConsumerProfileView: View {
                             ProfileRow(label: "profile.role", value: String(localized: "role.consumer.title"))
                         }
 
+                        ChargingHistorySection(viewModel: viewModel)
+
                         ProfileSection(title: "profile.section.preferences") {
                             LanguageToggle(style: .row)
                         }
@@ -52,7 +55,104 @@ struct ConsumerProfileView: View {
             .navigationTitle("consumer.tab.profile")
             .toolbarBackground(Color.appSurface, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .task { await viewModel.load() }
+            .refreshable { await viewModel.load() }
         }
+    }
+}
+
+private struct ChargingHistorySection: View {
+    let viewModel: ConsumerProfileViewModel
+
+    var body: some View {
+        ProfileSection(title: "profile.section.history") {
+            if viewModel.isLoading && viewModel.sessions.isEmpty {
+                HistoryRowPlaceholder()
+            } else if let errorMessage = viewModel.errorMessage, viewModel.sessions.isEmpty {
+                Text(errorMessage)
+                    .font(.appText(13, weight: .medium))
+                    .foregroundStyle(Color.appDanger)
+                    .padding(AppSpacing.lg)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if viewModel.sessions.isEmpty {
+                Text("profile.history.empty")
+                    .font(.appText(13))
+                    .foregroundStyle(Color.appFg3)
+                    .padding(AppSpacing.lg)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                ForEach(viewModel.sessions) { session in
+                    ChargingHistoryRow(session: session)
+                }
+            }
+        }
+    }
+}
+
+private struct ChargingHistoryRow: View {
+    let session: ChargingSession
+
+    /// Cost in Thai baht as a `Decimal`. Domain stores satang as
+    /// `Int`; conversion happens at the display boundary only — the
+    /// money invariant in CLAUDE.md.
+    private var costBaht: Decimal {
+        Decimal(session.costSatang) / 100
+    }
+
+    /// `M.MM kWh` for compact display. Three significant figures
+    /// covers a phone-app session (rarely > 100 kWh).
+    private var energyText: String {
+        String(format: "%.2f kWh", session.energyKWh)
+    }
+
+    /// Locale-aware date — uses the env `\.locale` from
+    /// `LocalePreference`, so a user toggling TH/EN sees the row
+    /// re-render in their preferred format.
+    private var dateText: String {
+        session.startedAt.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    var body: some View {
+        HStack(spacing: AppSpacing.md) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.stationId)
+                    .font(.appText(14, weight: .semibold))
+                    .foregroundStyle(Color.appFg)
+                    .lineLimit(1)
+                Text(dateText)
+                    .font(.appText(12))
+                    .foregroundStyle(Color.appFg3)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(CurrencyFormatter.thb.string(from: costBaht))
+                    .font(.appMono(14, weight: .semibold))
+                    .foregroundStyle(Color.appFg)
+                Text(energyText)
+                    .font(.appMono(11))
+                    .foregroundStyle(Color.appFg3)
+            }
+        }
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.md)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.appRule).frame(height: 0.5)
+                .padding(.leading, AppSpacing.lg)
+        }
+    }
+}
+
+/// Skeleton row shown while the first load is in flight.
+private struct HistoryRowPlaceholder: View {
+    var body: some View {
+        HStack {
+            ProgressView().controlSize(.small)
+            Text("common.loading")
+                .font(.appText(13))
+                .foregroundStyle(Color.appFg3)
+        }
+        .padding(AppSpacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

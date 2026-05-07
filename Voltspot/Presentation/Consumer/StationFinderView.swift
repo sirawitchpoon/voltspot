@@ -8,6 +8,7 @@ struct StationFinderView: View {
         NavigationStack {
             ZStack {
                 Map(position: $viewModel.cameraPosition) {
+                    UserAnnotation()
                     ForEach(viewModel.stations) { station in
                         Annotation(station.name, coordinate: station.coordinate) {
                             StationMarker(station: station) {
@@ -53,6 +54,7 @@ struct StationFinderView: View {
             .toolbarBackground(Color.appSurface, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .task { await viewModel.loadInitialStations() }
+            .onDisappear { viewModel.stopTrackingLocation() }
             .sheet(item: $viewModel.selectedStation) { station in
                 StationDetailView(station: station)
                     .presentationDetents([.medium, .large])
