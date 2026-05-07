@@ -120,13 +120,64 @@ timed out.
 
 ## Tests
 
+### Unit tests
+
 ```bash
-go test ./...
+go test -race ./...
 ```
 
-Unit tests cover the envelope codec, the Firebase ID token
-middleware (with a fake Verifier), pricing math, and the
-transaction-id allocator (including concurrency).
+Cover the envelope codec, the Firebase ID token middleware (with a
+fake Verifier), pricing math, the transaction-id allocator
+(including concurrency), and the pending-starts registry.
+
+### Smoke tests — checked-in, runnable, single-screenshot proof
+
+Two end-to-end smoke runners ship as Go binaries under `cmd/`. Each
+prints a colored `PASS` / `FAIL` per scenario and exits non-zero on
+any failure — designed so a single screenshot tells the whole story.
+
+**Phase A — Firebase backend** (no gateway needed)
+
+Verifies what the iOS app depends on: Identity Toolkit signup, ID
+token verification, stations seed integrity (count, integer satang,
+9-char Thailand geohash), and three Firestore security rules
+(authenticated read, anonymous denied, cross-user write denied).
+
+```bash
+export FIREBASE_PROJECT_ID=voltspot-e410c
+export GOOGLE_APPLICATION_CREDENTIALS=$PWD/../../scripts/service-account.json
+
+go run ./cmd/smoke-app
+```
+
+The Web API key is read from `../../Voltspot/Resources/GoogleService-Info.plist`
+unless `-api-key` or `VOLTSPOT_FIREBASE_API_KEY` is set. Two
+ephemeral test users (`smoke-a-{ts}@voltspot.test`,
+`smoke-b-{ts}@voltspot.test`) are created and deleted automatically
+unless `-cleanup=false`.
+
+**Phase B — OCPP Gateway** (requires `go run ./cmd/gateway` running)
+
+Connects as a fake charger over WebSocket and exercises the full
+session lifecycle (Boot → StatusNotification → Heartbeat →
+StartTransaction → MeterValues → StopTransaction), then optionally
+verifies the resulting `/connector_status` and `/sessions` docs in
+Firestore.
+
+```bash
+# In one terminal, start the gateway:
+go run ./cmd/gateway
+
+# In another terminal, run the smoke:
+go run ./cmd/smoke -firestore                          # full check
+go run ./cmd/smoke                                     # wire-only, fast
+go run ./cmd/smoke -firestore -cleanup                 # also delete created docs
+go run ./cmd/smoke -url wss://staging.run.app/ocpp/cp  # against a deployed gateway
+```
+
+Both smoke runners exit with code 0 on full pass, 1 on any failure
+— wire them into a deployment pipeline gate when the gateway is
+reachable from the runner.
 
 ## Deploying
 
