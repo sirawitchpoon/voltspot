@@ -152,6 +152,10 @@ function buildSession({ stationId, station, startedAt, txCounter }) {
     id: `tx-demo-${txCounter}`,
     payload: {
       userId: DEMO_CONSUMER_UID,
+      // Denormalised from /stations/{id}.partnerId so the Firestore
+      // security rule can authorise partner reads via a single-doc
+      // check instead of a cross-collection join.
+      partnerId: station.partnerId ?? PARTNER_UID,
       stationId,
       connectorId,
       startTime: Timestamp.fromDate(startedAt),

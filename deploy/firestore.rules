@@ -33,8 +33,14 @@ service cloud.firestore {
     }
 
     match /sessions/{sessionId} {
+      // Consumer reads their own sessions; partner reads sessions on
+      // stations they own. We denormalise partnerId onto the doc at
+      // write time (Gateway sets it from /stations/{id}.partnerId at
+      // StartTransaction; demo seeds set it explicitly) so this stays
+      // a single-document check instead of a cross-collection join.
       allow read: if isSignedIn()
-        && resource.data.userId == request.auth.uid;
+        && (resource.data.userId == request.auth.uid
+            || resource.data.partnerId == request.auth.uid);
       allow write: if isGatewayServiceAccount();
     }
 
