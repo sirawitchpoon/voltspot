@@ -57,11 +57,7 @@ final class MyStationsViewModel {
             }
 
             let (from, to) = Self.todayBounds()
-            let sessions = try await sessionRepo.partnerSessions(
-                stationIds: owned.map(\.id),
-                from: from,
-                to: to
-            )
+            let sessions = try await sessionRepo.partnerSessions(from: from, to: to)
             self.todayByStation = Dictionary(grouping: sessions, by: \.stationId)
                 .mapValues(PartnerDailyRollup.init(sessions:))
         } catch let error as GatewayError {

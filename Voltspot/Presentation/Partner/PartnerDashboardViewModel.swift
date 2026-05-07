@@ -61,10 +61,8 @@ final class PartnerDashboardViewModel {
             let (todayFrom, todayTo) = Self.todayBounds()
             let (monthFrom, monthTo) = Self.monthBounds()
 
-            async let todayTask = sessionRepo.partnerSessions(
-                stationIds: owned.map(\.id), from: todayFrom, to: todayTo)
-            async let monthTask = sessionRepo.partnerSessions(
-                stationIds: owned.map(\.id), from: monthFrom, to: monthTo)
+            async let todayTask = sessionRepo.partnerSessions(from: todayFrom, to: todayTo)
+            async let monthTask = sessionRepo.partnerSessions(from: monthFrom, to: monthTo)
 
             let today = try await todayTask
             let month = try await monthTask

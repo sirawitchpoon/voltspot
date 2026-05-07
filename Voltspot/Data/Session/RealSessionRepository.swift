@@ -66,29 +66,22 @@ struct RealSessionRepository: SessionRepository, @unchecked Sendable {
         return snapshot.documents.compactMap(Self.decodeSession)
     }
 
-    /// Partner-side aggregation: every session whose `stationId`
-    /// belongs to the partner, in `[from, to)`. Firestore's `in`
-    /// operator is capped at 30 values per query, so we chunk the
-    /// stationIds, fan out, and merge — N+1 round-trips are fine
-    /// here because partner portfolios are small (typically <30) and
-    /// this is invoked from screens the user explicitly opens, not on
-    /// the hot path.
-    func partnerSessions(stationIds: [String], from: Date, to: Date) async throws -> [ChargingSession] {
-        guard !stationIds.isEmpty else { return [] }
-        let chunks = stationIds.chunked(into: 30)
-        var combined: [ChargingSession] = []
-        for chunk in chunks {
-            let snapshot = try await db.collection("sessions")
-                .whereField("stationId", in: chunk)
-                .whereField("startTime", isGreaterThanOrEqualTo: Timestamp(date: from))
-                .whereField("startTime", isLessThan: Timestamp(date: to))
-                .order(by: "startTime", descending: true)
-                .getDocuments()
-            combined.append(contentsOf: snapshot.documents.compactMap(Self.decodeSession))
+    /// Partner-side aggregation: every session belonging to the
+    /// signed-in partner in `[from, to)`. Filters on the denormalised
+    /// `partnerId` field — set by the Gateway at StartTransaction in
+    /// production, set by `seed-sessions.js` for demos. Backed by the
+    /// composite index `(partnerId asc, startTime desc)`.
+    func partnerSessions(from: Date, to: Date) async throws -> [ChargingSession] {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw GatewayError.notAuthenticated
         }
-        // Re-sort across chunk boundaries so callers see one merged
-        // descending stream regardless of how the IDs were split.
-        return combined.sorted { $0.startedAt > $1.startedAt }
+        let snapshot = try await db.collection("sessions")
+            .whereField("partnerId", isEqualTo: uid)
+            .whereField("startTime", isGreaterThanOrEqualTo: Timestamp(date: from))
+            .whereField("startTime", isLessThan: Timestamp(date: to))
+            .order(by: "startTime", descending: true)
+            .getDocuments()
+        return snapshot.documents.compactMap(Self.decodeSession)
     }
 
     func startSession(stationId: String, connectorId: String) async throws -> ChargingSession {

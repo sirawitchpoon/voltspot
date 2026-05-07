@@ -5,12 +5,11 @@ protocol SessionRepository: Sendable {
     func startSession(stationId: String, connectorId: String) async throws -> ChargingSession
     func stopSession(id: String) async throws -> ChargingSession
 
-    /// Completed (or active) sessions across the given station IDs in
-    /// the half-open range `[from, to)`. Drives Partner Earnings +
-    /// Dashboard. Caller passes their owned station IDs from
-    /// `StationRepository.partnerStations(...)`.
-    ///
-    /// Implementations should chunk the `stationIds` list to honour
-    /// Firestore's 30-element `in` limit and merge the results.
-    func partnerSessions(stationIds: [String], from: Date, to: Date) async throws -> [ChargingSession]
+    /// Sessions across every station owned by the signed-in partner
+    /// in the half-open range `[from, to)`. Drives Partner Earnings
+    /// + Dashboard. Filters server-side on the denormalised
+    /// `partnerId` field so the Firestore security rule (which only
+    /// permits reads where `partnerId == auth.uid`) can authorise
+    /// the query without a cross-collection join.
+    func partnerSessions(from: Date, to: Date) async throws -> [ChargingSession]
 }

@@ -63,17 +63,12 @@ final class EarningsViewModel {
             }
 
             let (from, to) = Self.monthBounds()
-            let sessions = try await sessionRepo.partnerSessions(
-                stationIds: stations.map(\.id),
-                from: from,
-                to: to
-            )
+            let sessions = try await sessionRepo.partnerSessions(from: from, to: to)
             self.monthSessions = sessions
 
             // Trailing 30 days for the bar chart. We bin by start date
             // in the local calendar — close enough for a visual.
             let chart = try await sessionRepo.partnerSessions(
-                stationIds: stations.map(\.id),
                 from: Self.thirtyDaysAgo(),
                 to: to
             )
