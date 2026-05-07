@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Operational scripts for the Voltspot iOS app — seeding, exports, migrations.",
   "scripts": {
-    "seed:stations": "node seed-stations.js"
+    "seed:stations": "node seed-stations.js",
+    "claim:stations": "node claim-stations.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0"
