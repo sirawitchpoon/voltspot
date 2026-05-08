@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import { DashShell } from '@/components/dash-shell';
+import { ManageElsewhereHint } from '@/components/manage-elsewhere-hint';
 import {
   fetchAllStations,
   subscribeRecentSessions,
@@ -93,6 +94,8 @@ export default function SessionsPage() {
           </select>
         </div>
       </header>
+
+      <ManageElsewhereHint topic="force-stop or refund a session" />
 
       <div className="overflow-hidden rounded-lg border border-rule bg-surface">
         <div className="hidden grid-cols-[80px_1.4fr_1fr_0.8fr_0.8fr_0.8fr_28px] items-center gap-3 border-b border-rule px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-fg-3 md:grid">

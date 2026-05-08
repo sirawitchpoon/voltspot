@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, Plug, ChevronRight, X } from 'lucide-react';
 import { DashShell } from '@/components/dash-shell';
+import { ManageElsewhereHint } from '@/components/manage-elsewhere-hint';
 import {
   fetchAllStations,
   fetchSessions,
@@ -97,6 +98,8 @@ export default function StationsPage() {
           {error}
         </div>
       )}
+
+      <ManageElsewhereHint topic="add a station, edit a tariff, or re-assign ownership" />
 
       <div className="overflow-hidden rounded-lg border border-rule bg-surface">
         <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_28px] items-center gap-3 border-b border-rule px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-fg-3 md:grid">

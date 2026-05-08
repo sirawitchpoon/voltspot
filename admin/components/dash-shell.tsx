@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { LayoutDashboard, MapPin, Plug, ListTree, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, MapPin, Plug, ListTree, BookOpen, type LucideIcon } from 'lucide-react';
 import { firebaseAuth } from '@/lib/firebase';
 import { useAdminAuth } from '@/lib/auth';
 import { APP_NAME } from '@/lib/config';
@@ -26,6 +26,7 @@ const NAV: NavItem[] = [
   { href: '/map', label: 'Map', icon: MapPin },
   { href: '/stations', label: 'Stations', icon: Plug },
   { href: '/sessions', label: 'Sessions', icon: ListTree },
+  { href: '/capabilities', label: 'Capabilities', icon: BookOpen },
 ];
 
 export function DashShell({ children }: { children: React.ReactNode }) {
