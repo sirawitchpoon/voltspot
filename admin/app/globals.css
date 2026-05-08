@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Color tokens mirror the iOS app's design tokens
+ * (Voltspot/Voltspot/Resources/Assets.xcassets/Colors). Values are
+ * approximate HSL — the iOS palette uses asset catalogs with light /
+ * dark variants; here we use a single warm-cream theme that matches
+ * the screenshots already shared in the conversation.
+ */
+@layer base {
+  :root {
+    --bg: 41 30% 96%;
+    --surface: 0 0% 100%;
+    --surface-2: 41 30% 92%;
+    --fg: 30 12% 15%;
+    --fg-2: 30 8% 35%;
+    --fg-3: 30 6% 55%;
+    --rule: 30 8% 86%;
+    --accent: 145 45% 32%;
+    --accent-tint: 145 45% 88%;
+    --success: 145 55% 38%;
+    --warning: 35 85% 50%;
+    --danger: 0 70% 50%;
+    --muted: 30 8% 60%;
+  }
+
+  body {
+    @apply bg-bg text-fg antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1, 'tnum' 1;
+  }
+
+  /* Tabular numerals everywhere — money + counts read better aligned. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -17,12 +17,27 @@ service cloud.firestore {
         && request.auth.token.role == 'gateway';
     }
 
+    // Admins are provisioned via scripts/grant-admin.js, which sets
+    // a `role: "admin"` Firebase custom claim. The admin webapp
+    // queries network-wide; rules grant read access on every
+    // operational collection without weakening per-tenant isolation
+    // for non-admins (each clause OR's isAdmin() with the existing
+    // owner check, so consumers + partners still see only their own
+    // data).
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
     match /users/{uid} {
-      allow read, write: if isOwner(uid);
+      // Admin can list every user doc for the directory view; an
+      // owner still has full read+write on their own doc.
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isOwner(uid);
     }
 
     match /partners/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isOwner(uid);
     }
 
     match /stations/{stationId} {
@@ -38,9 +53,11 @@ service cloud.firestore {
       // write time (Gateway sets it from /stations/{id}.partnerId at
       // StartTransaction; demo seeds set it explicitly) so this stays
       // a single-document check instead of a cross-collection join.
+      // Admins read everything for the operations console.
       allow read: if isSignedIn()
         && (resource.data.userId == request.auth.uid
-            || resource.data.partnerId == request.auth.uid);
+            || resource.data.partnerId == request.auth.uid
+            || isAdmin());
       allow write: if isGatewayServiceAccount();
     }
 

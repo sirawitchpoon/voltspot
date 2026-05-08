@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+.env*.local
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Repo-level .gitignore catches .env.* — explicitly allow the template
+# so collaborators have a starting point.
+!.env.local.example
