@@ -3,25 +3,37 @@ import SwiftUI
 struct EarningsView: View {
     @State private var viewModel = EarningsViewModel()
 
+    /// Skeleton on first load only — subsequent pull-to-refresh keeps
+    /// the previous numbers on screen while the request is in flight
+    /// so the view doesn't flicker back to placeholders for a moment.
+    private var isFirstLoad: Bool {
+        viewModel.isLoading && viewModel.monthSessions.isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.appBg.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: AppSpacing.lg) {
-                        bigStatCard
-                        breakdownRow
-                        dailyChartCard
-                        if let errorMessage = viewModel.errorMessage {
-                            Text(errorMessage)
-                                .font(.appText(12))
-                                .foregroundStyle(Color.appDanger)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, AppSpacing.lg)
+                        if isFirstLoad {
+                            EarningsSkeleton()
+                                .transition(.opacity)
+                        } else {
+                            bigStatCard
+                            breakdownRow
+                            dailyChartCard
+                            if let errorMessage = viewModel.errorMessage {
+                                ErrorBanner(
+                                    message: errorMessage,
+                                    onRetry: { Task { await viewModel.load() } }
+                                )
+                            }
+                            payoutsSection
                         }
-                        payoutsSection
                     }
                     .padding(AppSpacing.lg)
+                    .animation(.easeInOut(duration: 0.25), value: isFirstLoad)
                 }
             }
             .navigationTitle("partner.tab.earnings")
@@ -170,5 +182,27 @@ struct EarningsView: View {
 
     private func bahtAmount(_ satang: Int) -> Decimal {
         Decimal(satang) / 100
+    }
+}
+
+// MARK: - Skeleton
+
+/// First-load placeholder that matches the real layout's vertical
+/// rhythm — keeps the screen from jumping when data arrives.
+private struct EarningsSkeleton: View {
+    var body: some View {
+        VStack(spacing: AppSpacing.lg) {
+            SkeletonShimmer(cornerRadius: AppRadius.lg)
+                .frame(height: 132)
+            HStack(spacing: AppSpacing.sm) {
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 64)
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 64)
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 64)
+            }
+            SkeletonShimmer(cornerRadius: AppRadius.lg)
+                .frame(height: 130)
+            SkeletonShimmer(cornerRadius: AppRadius.lg)
+                .frame(height: 110)
+        }
     }
 }

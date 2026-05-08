@@ -3,6 +3,10 @@ import SwiftUI
 struct PartnerDashboardView: View {
     @State private var viewModel = PartnerDashboardViewModel()
 
+    private var isFirstLoad: Bool {
+        viewModel.isLoading && viewModel.stations.isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -19,32 +23,37 @@ struct PartnerDashboardView: View {
                         }
                         .padding(.top, AppSpacing.sm)
 
-                        StatTileGrid(
-                            sessionsToday: viewModel.sessionsTodayCount,
-                            energyTodayKWh: viewModel.energyTodayKWh,
-                            monthGrossSatang: viewModel.monthGrossSatang,
-                            activeStationsLabel: viewModel.activeStationsLabel
-                        )
-
-                        if let errorMessage = viewModel.errorMessage {
-                            Text(errorMessage)
-                                .font(.appText(12))
-                                .foregroundStyle(Color.appDanger)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, AppSpacing.md)
-                        }
-
-                        VStack(alignment: .leading, spacing: AppSpacing.md) {
-                            Text("partner.dashboard.activity")
-                                .font(.appText(17, weight: .semibold))
-                                .foregroundStyle(Color.appFg)
-                            ActivityListCard(
-                                activities: viewModel.recentActivity,
-                                stationNameProvider: viewModel.stationName(for:)
+                        if isFirstLoad {
+                            DashboardSkeleton()
+                                .transition(.opacity)
+                        } else {
+                            StatTileGrid(
+                                sessionsToday: viewModel.sessionsTodayCount,
+                                energyTodayKWh: viewModel.energyTodayKWh,
+                                monthGrossSatang: viewModel.monthGrossSatang,
+                                activeStationsLabel: viewModel.activeStationsLabel
                             )
+
+                            if let errorMessage = viewModel.errorMessage {
+                                ErrorBanner(
+                                    message: errorMessage,
+                                    onRetry: { Task { await viewModel.load() } }
+                                )
+                            }
+
+                            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                                Text("partner.dashboard.activity")
+                                    .font(.appText(17, weight: .semibold))
+                                    .foregroundStyle(Color.appFg)
+                                ActivityListCard(
+                                    activities: viewModel.recentActivity,
+                                    stationNameProvider: viewModel.stationName(for:)
+                                )
+                            }
                         }
                     }
                     .padding(AppSpacing.lg)
+                    .animation(.easeInOut(duration: 0.25), value: isFirstLoad)
                 }
             }
             .navigationTitle("partner.tab.dashboard")
@@ -52,6 +61,21 @@ struct PartnerDashboardView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .task { await viewModel.load() }
             .refreshable { await viewModel.load() }
+        }
+    }
+}
+
+private struct DashboardSkeleton: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.md) {
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 88)
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 88)
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 88)
+                SkeletonShimmer(cornerRadius: AppRadius.md).frame(height: 88)
+            }
+            SkeletonShimmer(cornerRadius: AppRadius.lg)
+                .frame(height: 280)
         }
     }
 }

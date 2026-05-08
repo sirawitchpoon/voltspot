@@ -7,7 +7,8 @@
   "scripts": {
     "seed:stations": "node seed-stations.js",
     "seed:sessions": "node seed-sessions.js",
-    "claim:stations": "node claim-stations.js"
+    "claim:stations": "node claim-stations.js",
+    "rename:stations": "node rename-stations.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0"

@@ -18,12 +18,25 @@ struct MyStationsView: View {
         }
     }
 
+    private var isFirstLoad: Bool {
+        viewModel.isLoading && viewModel.stations.isEmpty
+    }
+
     @ViewBuilder
     private var content: some View {
         if let errorMessage = viewModel.errorMessage, viewModel.stations.isEmpty {
             errorState(message: errorMessage)
-        } else if viewModel.stations.isEmpty, viewModel.isLoading {
-            ProgressView().tint(Color.appAccent)
+        } else if isFirstLoad {
+            ScrollView {
+                VStack(spacing: AppSpacing.md) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        SkeletonShimmer(cornerRadius: AppRadius.lg)
+                            .frame(height: 132)
+                    }
+                }
+                .padding(AppSpacing.lg)
+            }
+            .transition(.opacity)
         } else if viewModel.stations.isEmpty {
             emptyState
         } else {
@@ -95,11 +108,16 @@ private struct PartnerStationCard: View {
 
     private var liveCount: Int { station.connectors.filter { $0.status == .available }.count }
     private var totalCount: Int { station.connectors.count }
+    /// Use an em-dash placeholder when no sessions touched the station
+    /// today — reads as "no activity" rather than the louder "0.0 kWh"
+    /// which can be misread as "broken" at a glance.
+    private var hasActivityToday: Bool { (rollup?.sessionCount ?? 0) > 0 }
     private var energyTodayText: String {
-        let kWh = rollup?.energyKWh ?? 0
-        return String(format: "%.1f kWh", kWh)
+        guard hasActivityToday else { return "—" }
+        return String(format: "%.1f kWh", rollup?.energyKWh ?? 0)
     }
     private var revenueTodayText: String {
+        guard hasActivityToday else { return "—" }
         let baht = Decimal(rollup?.revenueSatang ?? 0) / 100
         return CurrencyFormatter.thb.string(from: baht)
     }

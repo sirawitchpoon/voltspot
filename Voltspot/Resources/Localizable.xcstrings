@@ -451,6 +451,23 @@
         }
       }
     },
+    "common.error.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Something went wrong"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เกิดข้อผิดพลาด"
+          }
+        }
+      }
+    },
     "common.error.signInRequired" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -75,8 +75,8 @@ function encodeGeohash(latitude, longitude, precision = 9) {
 const STATIONS = [
   {
     id: 'stn-bkk-01',
-    name: 'Asoke EV Hub',
-    address: 'Sukhumvit Rd, Khlong Toei, Bangkok',
+    name: 'อโศก อีวี ฮับ',
+    address: 'ถ.สุขุมวิท คลองเตย กรุงเทพฯ',
     latitude: 13.7373,
     longitude: 100.5602,
     connectors: [
@@ -88,8 +88,8 @@ const STATIONS = [
   },
   {
     id: 'stn-bkk-02',
-    name: 'Siam Paragon FastCharge',
-    address: 'Rama I Rd, Pathum Wan, Bangkok',
+    name: 'สยามพารากอน FastCharge',
+    address: 'ถ.พระราม 1 ปทุมวัน กรุงเทพฯ',
     latitude: 13.7466,
     longitude: 100.5347,
     connectors: [
@@ -101,8 +101,8 @@ const STATIONS = [
   },
   {
     id: 'stn-cnx-01',
-    name: 'Nimman Charge Point',
-    address: 'Nimmanhaemin Rd, Chiang Mai',
+    name: 'นิมมาน Charge Point',
+    address: 'ถ.นิมมานเหมินทร์ เชียงใหม่',
     latitude: 18.7976,
     longitude: 98.9669,
     connectors: [
@@ -113,8 +113,8 @@ const STATIONS = [
   },
   {
     id: 'stn-hkt-01',
-    name: 'Patong Beach EV',
-    address: 'Patong, Phuket',
+    name: 'ป่าตอง บีช อีวี',
+    address: 'ป่าตอง ภูเก็ต',
     latitude: 7.8967,
     longitude: 98.2967,
     connectors: [
@@ -125,8 +125,8 @@ const STATIONS = [
   },
   {
     id: 'stn-rai-01',
-    name: 'Suphanburi Drone Field',
-    address: 'Suphanburi rice plains',
+    name: 'ลานโดรนสุพรรณบุรี',
+    address: 'ทุ่งนาสุพรรณบุรี',
     latitude: 14.4744,
     longitude: 100.1177,
     connectors: [
@@ -138,8 +138,8 @@ const STATIONS = [
   },
   {
     id: 'stn-mix-01',
-    name: 'Korat AgriDepot Hybrid',
-    address: 'Mueang Nakhon Ratchasima',
+    name: 'โคราช AgriDepot ไฮบริด',
+    address: 'อ.เมือง นครราชสีมา',
     latitude: 14.9799,
     longitude: 102.0978,
     connectors: [
