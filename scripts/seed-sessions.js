@@ -108,9 +108,18 @@ function randomStartInWindow(days) {
 }
 
 function randomStartToday() {
+  // Anchor to the start of the local day so every "today" session
+  // lands inside the same calendar day the iOS app's
+  // `Calendar.current.startOfDay(for: Date())` will compute. The
+  // earlier "last 8 hours" implementation walked past midnight when
+  // the seeder happened to run shortly after 00:00 and all the
+  // would-be "today" rows ended up tagged as yesterday.
   const now = new Date();
-  const offsetMin = Math.floor(Math.random() * 8 * 60); // last 8h
-  return new Date(now.getTime() - offsetMin * 60 * 1000);
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const elapsedMs = Math.max(1, now.getTime() - startOfToday.getTime());
+  const offsetMs = Math.floor(Math.random() * elapsedMs);
+  return new Date(startOfToday.getTime() + offsetMs);
 }
 
 /// Banker's-rounded satang cost — mirrors the Go gateway's pricing
